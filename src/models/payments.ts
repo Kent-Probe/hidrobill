@@ -1,8 +1,8 @@
 export type Payment = {
   id: string;
-  id_contrato: string;
-  date: string;
-  valueTotal: number;
+  id_contract: string;
+  date: string | Date;
+  value_total: number;
   remaining_debt: number;
   reconnection: number;
   enrollment: number;
@@ -10,6 +10,6 @@ export type Payment = {
   payments: number;
   late_fee: number;
   other_charges: number;
-  paymentState: "PAGADO" | "PENDIENTE" | "ANULADO";
+  payment_state: "PAGADO" | "PENDIENTE" | "ANULADO";
   description: string;
 };

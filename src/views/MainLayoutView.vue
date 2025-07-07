@@ -1,5 +1,19 @@
 <script setup lang="ts">
-import { mdiAccountGroup, mdiAccountStar, mdiCashClock, mdiHomeAccount, mdiMagnify } from "@mdi/js";
+import { mdiAccountGroup, mdiAccountStar, mdiCashClock, mdiHomeAccount, mdiLogout, mdiMagnify } from "@mdi/js";
+import { storeToRefs } from "pinia";
+import { cookieStorage } from "../plugins/cookieAdapter";
+import router from "../routes";
+import { useAuthStore } from "../stores/auth";
+
+const authStore = useAuthStore();
+const { getUser } = storeToRefs(authStore);
+const { logout } = authStore;
+
+const logoutUser = () => {
+  logout();
+  cookieStorage.removeItem("auth");
+  router.push({ name: "Login" });
+};
 </script>
 
 <template>
@@ -7,7 +21,7 @@ import { mdiAccountGroup, mdiAccountStar, mdiCashClock, mdiHomeAccount, mdiMagni
     <v-layout>
       <v-navigation-drawer expand-on-hover rail>
         <v-list>
-          <v-list-item :prepend-icon="mdiAccountStar" subtitle="sandra_a88@gmailcom" title="Sandra Adams"></v-list-item>
+          <v-list-item :prepend-icon="mdiAccountStar" :subtitle="getUser.username" :title="getUser.name"></v-list-item>
         </v-list>
 
         <v-divider></v-divider>
@@ -16,6 +30,11 @@ import { mdiAccountGroup, mdiAccountStar, mdiCashClock, mdiHomeAccount, mdiMagni
           <v-list-item :prepend-icon="mdiAccountGroup" title="Clientes" :to="{ name: 'Clients' }"></v-list-item>
           <v-list-item :prepend-icon="mdiHomeAccount" title="Casas" :to="{ name: 'Houses' }"></v-list-item>
           <v-list-item :prepend-icon="mdiCashClock" title="Pagos" :to="{ name: 'Payments' }"></v-list-item>
+          <v-list-item :prepend-icon="mdiAccountStar" title="Usuarios" :to="{ name: 'Users' }"></v-list-item>
+        </v-list>
+        <v-divider></v-divider>
+        <v-list>
+          <v-list-item :prepend-icon="mdiLogout" title="Cerrar Sesión" @click="logoutUser"></v-list-item>
         </v-list>
       </v-navigation-drawer>
 

@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { mdiAccountMultiple, mdiHomeEdit, mdiMagnify, mdiPlus } from "@mdi/js";
-import { ref, watch } from "vue";
+import { storeToRefs } from "pinia";
+import { onMounted, ref, watch } from "vue";
+import { usePaymetsStore } from "../stores/pagos";
 import { formatDate, formatPrice } from "../utilities/format";
+
+const storePayments = usePaymetsStore();
+const { cargando, pagos, pageLength } = storeToRefs(storePayments);
+const { fetchPayments } = storePayments;
 
 const DEFAULT_PAYMENT: Payment = {
   id: "",
@@ -20,56 +26,6 @@ const paymentSelect = defineModel<Payment>({
 const idPayment = ref("");
 const idClient = ref("");
 
-const payment: Payment[] = [];
-for (let i = 1; i <= 11; i++) {
-  payment.push({
-    id: `PAY-${i.toString().padStart(3, "0")}`,
-    id_contrato: `CONT-${i.toString().padStart(3, "0")}`,
-    date: new Date(2024, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1).toISOString(),
-    valueTotal: Math.floor(Math.random() * 500000) + 50000,
-    remaining_debt: Math.floor(Math.random() * 200000),
-    reconnection: Math.floor(Math.random() * 50000),
-    enrollment: Math.floor(Math.random() * 30000) + 10000,
-    monthly_payment: Math.floor(Math.random() * 80000) + 20000,
-    payments: Math.floor(Math.random() * 5) + 1,
-    late_fee: Math.floor(Math.random() * 15000),
-    other_charges: Math.floor(Math.random() * 10000),
-    paymentState: ["PAGADO", "PENDIENTE", "ANULADO"][Math.floor(Math.random() * 3)] as
-      | "PAGADO"
-      | "PENDIENTE"
-      | "ANULADO",
-    description: `Pago mensual de servicio de agua - ${i}`,
-  });
-}
-
-const FakeAPI = {
-  async fetch({ page, itemsPerPage, sortBy, search }) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const start = (page - 1) * itemsPerPage;
-        const end = start + itemsPerPage;
-        const items = payment.slice().filter((item) => {
-          if (search.direction && search.direction !== "") {
-            return false;
-          }
-          return true;
-        });
-        if (sortBy.length) {
-          const sortKey = sortBy[0].key;
-          const sortOrder = sortBy[0].order;
-          items.sort((a, b) => {
-            const aValue = a[sortKey];
-            const bValue = b[sortKey];
-            return sortOrder === "desc" ? bValue - aValue : aValue - bValue;
-          });
-        }
-        const paginated = items.slice(start, end === -1 ? undefined : end);
-        resolve({ items: paginated, total: items.length });
-      }, 500);
-    });
-  },
-};
-
 const itemsPerPage = ref(5);
 
 const headers = [
@@ -87,28 +43,23 @@ const headers = [
   { title: "Reconexión", key: "reconnection", align: "end", value: (val) => formatPrice(val.reconnection) },
   { title: "Deuda restante", key: "remaining_debt", align: "end", value: (val) => formatPrice(val.remaining_debt) },
   { title: "Matrícula", key: "enrollment", align: "end", value: (val) => formatPrice(val.enrollment) },
-  { title: "Valor total", key: "valueTotal", align: "end", value: (val) => formatPrice(val.valueTotal) },
+  { title: "Valor total", key: "value_total", align: "end", value: (val) => formatPrice(val.valueTotal) },
   { title: "Abono", key: "payments", align: "end", value: (val) => formatPrice(val.payments) },
   { title: "Cargo por pago atrasado", key: "late_fee", align: "end", value: (val) => formatPrice(val.late_fee) },
   { title: "Otros cargos", key: "other_charges", align: "end", value: (val) => formatPrice(val.other_charges) },
   { title: "Descripción", key: "description", align: "end" },
-  { title: "Estado", key: "paymentState", align: "end" },
+  { title: "Estado", key: "payment_state", align: "end" },
   { title: "", key: "actions", align: "end" },
 ];
 
 const serverItems = ref([]);
-const loading = ref(true);
 const totalItems = ref(0);
 const direction = ref("");
 const search = ref("");
 
-function loadItems({ page, itemsPerPage, sortBy }) {
-  loading.value = true;
-  FakeAPI.fetch({ page, itemsPerPage, sortBy, search: { direction: direction.value } }).then(({ items, total }) => {
-    serverItems.value = items;
-    totalItems.value = total;
-    loading.value = false;
-  });
+function loadItems(value) {
+  console.log(value);
+  console.log("-------- loadItems --------");
 }
 
 watch(direction, () => {
@@ -122,17 +73,19 @@ function SelectItem(item: Payment) {
     paymentSelect.value = { ...DEFAULT_PAYMENT };
   }
 }
+
+onMounted(() => {
+  fetchPayments();
+});
 </script>
 
 <template>
   <v-data-table-server
-    v-model:items-per-page="itemsPerPage"
     :headers="headers"
-    :items="serverItems"
-    :items-length="totalItems"
-    :loading="loading"
+    :items="pagos"
+    :loading="cargando"
     :search="search"
-    no-data-text="No hay casas registradas"
+    no-data-text="No hay pagos registradas"
     item-value="id"
     fixed-header
     hover
@@ -180,20 +133,10 @@ function SelectItem(item: Payment) {
             <v-col cols="3">
               <v-text-field
                 :prepend-inner-icon="mdiMagnify"
-                v-model="idPayment"
-                class="ma-2"
-                label="Código de pago"
-                type="text"
-                variant="outlined"
-                hide-details
-              ></v-text-field>
-            </v-col>
-            <v-col cols="3">
-              <v-text-field
-                :prepend-inner-icon="mdiMagnify"
                 v-model="idClient"
                 class="ma-2"
-                label="Número de documento cliente"
+                density="compact"
+                placeholder="Número de documento cliente"
                 type="text"
                 variant="outlined"
                 hide-details
@@ -202,6 +145,11 @@ function SelectItem(item: Payment) {
           </v-row>
         </td>
       </tr>
+    </template>
+    <template v-slot:bottom>
+      <div class="text-center pt-2">
+        <v-pagination v-model="page" :length="pageLength" total-visible="5"></v-pagination>
+      </div>
     </template>
   </v-data-table-server>
 </template>

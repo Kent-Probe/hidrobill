@@ -11,11 +11,11 @@ import {
 } from "@mdi/js";
 import { storeToRefs } from "pinia";
 import { onMounted, ref, shallowRef, watch } from "vue";
-import { Client } from "../models/clients";
+import { ClientWithInfo } from "../models/clients";
 import { useClientsStore } from "../stores/clients";
 import ComboBoxHouses from "./ComboBoxHouses.vue";
 
-const DEFAULT_RECORD: Client = {
+const DEFAULT_RECORD: ClientWithInfo = {
   id: "",
   document: "",
   name: "",
@@ -25,20 +25,19 @@ const DEFAULT_RECORD: Client = {
   state: "Al dia",
   gender: "",
   contracts: [],
-  payments: [],
-  houses: [],
 };
 
-const selectClient = defineModel<Client>({
+const selectClient = defineModel<ClientWithInfo>({
   required: true,
-  type: Object as Client,
+  type: Object as ClientWithInfo,
   default: () => ({}),
 });
 
 const clientsStore = useClientsStore();
-const { clients, cargando } = storeToRefs(clientsStore);
+const { clients, cargando, pageLength } = storeToRefs(clientsStore);
 const { fetchClients } = clientsStore;
 
+const page = ref(1);
 const record = ref({ ...DEFAULT_RECORD });
 const form = ref();
 const formHouses = ref();
@@ -46,8 +45,12 @@ const dialog = shallowRef(false);
 const isEditing = shallowRef(false);
 const rules = [(v) => !!v || "Este campo es obligatorio", (v) => v.length >= 3 || "Mínimo 3 caracteres"];
 
+watch(page, async (newPage) => {
+  await fetchClients(8, newPage);
+});
+
 const headers = [
-  { title: "Documento", key: "id", align: "start" },
+  { title: "Documento", key: "document", align: "start" },
   { title: "Nombres", key: "name" },
   { title: "Apellidos", key: "lastname" },
   { title: "Estado", key: "state" },
@@ -148,7 +151,7 @@ async function nexStep() {
   step.value++;
 }
 
-async function selectClientHandler(client: Client) {
+async function selectClientHandler(client: ClientWithInfo) {
   if (client) {
     selectClient.value = client;
   } else {
@@ -159,12 +162,14 @@ async function selectClientHandler(client: Client) {
 
 <template>
   <v-sheet border rounded>
-    <v-data-table-virtual
+    <v-data-table-server
+      :v-model:page="page"
       no-data-text="Sin datos a mostrar"
       :headers="headers"
       :items="cargando === true ? [] : clients"
-      height="600"
       :loading="cargando"
+      :items-per-page="8"
+      items-length="8"
       loading-text="Cargando clientes..."
       fixed-header
       hover
@@ -202,7 +207,7 @@ async function selectClientHandler(client: Client) {
         <tr @click="selectClientHandler(item)" class="text-no-wrap">
           <td>
             <v-chip
-              :text="item.id"
+              :text="item.document"
               border="thin opacity-25"
               :prepend-icon="item.gender.toLowerCase() === 'masculino' ? mdiFaceMan : mdiFaceWoman"
               :color="item.gender.toLowerCase() === 'masculino' ? 'indigo' : 'pink'"
@@ -216,15 +221,25 @@ async function selectClientHandler(client: Client) {
           <td>{{ item.state }}</td>
           <td class="text-end">
             <v-chip
-              v-for="(house, index) in item.houses"
+              v-if="item.contracts === null || item.contracts.length === 0"
+              text="Sin casas"
+              color="grey lighten-3"
+              size="small"
+              variant="flat"
+            >
+              Sin casas
+            </v-chip>
+            <v-chip
+              v-else
+              v-for="(contract, index) in item.contracts"
               :key="index"
-              :text="house.id"
-              :color="`${house.colorChip}-lighten-3`"
+              :text="contract.id"
+              :color="`${contract.house.colorChip}-lighten-3`"
               size="small"
               variant="flat"
               :class="index > 0 && 'ml-1'"
             >
-              {{ house.id }}
+              {{ contract.id }}
             </v-chip>
           </td>
           <td class="text-end">
@@ -236,7 +251,13 @@ async function selectClientHandler(client: Client) {
           </td>
         </tr>
       </template>
-    </v-data-table-virtual>
+
+      <template v-slot:bottom>
+        <div class="text-center pt-2">
+          <v-pagination v-model="page" :length="pageLength" total-visible="5"></v-pagination>
+        </div>
+      </template>
+    </v-data-table-server>
   </v-sheet>
 
   <v-dialog v-model="dialog" max-width="700">

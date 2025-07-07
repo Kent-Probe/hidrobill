@@ -1,26 +1,40 @@
 <script setup>
 import { mdiEye, mdiEyeOff } from "@mdi/js";
-import { ref } from "vue";
+import { storeToRefs } from "pinia";
+import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import MessageWelcome from "../components/MessageWelcome.vue";
+import { useAuthStore } from "../stores/auth";
+
+const authStore = useAuthStore();
+const { user, loading, isError, error } = storeToRefs(authStore);
+const { login, autoLogin } = authStore;
+
+onMounted(() => {
+  console.log(autoLogin());
+  if (autoLogin()) {
+    router.push({ name: "Clients" });
+  }
+});
 
 const router = useRouter();
 const username = ref("");
 const password = ref("");
 const show = ref(false);
+const alert = ref(false);
 
 const rules = [(v) => !!v || "Este campo es obligatorio", (v) => v.length >= 3 || "Mínimo 3 caracteres"];
 
-const handleLogin = () => {
-  // Aquí puedes agregar la lógica de autenticación
-  console.log("Intento de inicio de sesión:", {
-    username: username.value,
-    password: password.value,
-  });
-
+const handleLogin = async () => {
+  if (!username.value || !password.value) {
+    return;
+  }
+  const result = await login(username.value, password.value);
+  if (result.username === "" || isError.value) {
+    alert.value = true;
+    return;
+  }
   router.push({ name: "Clients" });
-
-  // redirigir a la página principal o manejar el error
 };
 </script>
 
@@ -49,7 +63,7 @@ const handleLogin = () => {
             <v-text-field
               v-model="password"
               :append-inner-icon="show ? mdiEye : mdiEyeOff"
-              :rules="[rules.required, rules.min]"
+              :rules="rules"
               :type="show ? 'text' : 'password'"
               hint="Mínimo 3 caracteres"
               variant="outlined"
@@ -59,17 +73,31 @@ const handleLogin = () => {
               @click:append-inner="show = !show"
             ></v-text-field>
 
-            <v-btn type="submit" color="primary" block size="large" class="mb-4"> Iniciar Sesión </v-btn>
+            <v-btn :loading="loading" type="submit" color="primary" block size="large" class="mb-4">
+              Iniciar Sesión
+            </v-btn>
 
             <div class="text-center">
               <router-link to="/register" class="text-decoration-none">
-                <v-btn variant="text" color="primary"> ¿No tienes cuenta? Regístrate </v-btn>
+                <v-btn :loading="loading" variant="text" color="primary"> ¿No tienes cuenta? Regístrate </v-btn>
               </router-link>
             </div>
           </v-form>
         </v-card>
       </v-col>
     </v-row>
+    <v-alert
+      v-if="isError"
+      v-model="alert"
+      style="bottom: 20px; right: 20px"
+      closable
+      title="Ocurrio un error al iniciar sesión"
+      :text="error.message"
+      type="error"
+      width="500"
+      position="absolute"
+      location="bottom right"
+    ></v-alert>
   </v-container>
 </template>
 
@@ -78,24 +106,3 @@ const handleLogin = () => {
   height: 100vh;
 }
 </style>
-
-<!-- <script>
-export default {
-  name: "LoginView",
-  data() {
-    return {
-      username: "",
-      password: "",
-    };
-  },
-  methods: {
-    handleLogin() {
-      // Lógica de login aquí
-      console.log("Login attempt:", {
-        username: this.username,
-        password: this.password,
-      });
-    },
-  },
-};
-</script> -->

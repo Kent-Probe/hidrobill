@@ -5,6 +5,7 @@ import LoginViews from "../views/LoginView.vue";
 import MainLayoutView from "../views/MainLayoutView.vue";
 import PaymentsView from "../views/PaymentsView.vue";
 import RegisterView from "../views/RegisterView.vue";
+import UserViews from "../views/UserView.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -58,6 +59,14 @@ const router = createRouter({
           component: PaymentsView,
           meta: {
             name: "Pagos",
+          },
+        },
+        {
+          path: "usuarios",
+          name: "Users",
+          component: UserViews,
+          meta: {
+            name: "Usuarios del Sistema",
           },
         },
       ],

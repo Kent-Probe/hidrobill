@@ -1,14 +1,22 @@
 <script setup lang="ts">
-import { mdiAccountMultiple, mdiHomeEdit, mdiPlus } from "@mdi/js";
-import { ref, watch } from "vue";
+import { mdiAccountMultiple, mdiHomeEdit, mdiMagnify, mdiPlus } from "@mdi/js";
+import { storeToRefs } from "pinia";
+import { onMounted, ref, watch } from "vue";
 import { House } from "../models/houses";
+import { useHousesStore } from "../stores/house";
+
+const storeHouses = useHousesStore();
+const { cargando, houses, pageLength } = storeToRefs(storeHouses);
+const { fetchHouses } = storeHouses;
 
 const DEFAULT_HOUSE: House = {
   id: "",
   direction: "",
   colorChip: "",
-  barrio: "",
   description: "",
+  neighborhood: "",
+  created_at: "",
+  updated_at: "",
 };
 
 const houseSelect = defineModel<House>({
@@ -17,136 +25,21 @@ const houseSelect = defineModel<House>({
   type: Object as House,
 });
 
-const house: House[] = [
-  {
-    id: "1",
-    direction: "Calle 123 #45-67",
-    colorChip: "yellow",
-    barrio: "Centro",
-    description: "Casa de dos pisos con patio amplio",
-  },
-  {
-    id: "2",
-    direction: "Carrera 8 #12-34",
-    colorChip: "teal",
-    barrio: "Norte",
-    description: "Apartamento moderno con balcón",
-  },
-  {
-    id: "3",
-    direction: "Avenida 15 #78-90",
-    colorChip: "red",
-    barrio: "Sur",
-    description: "Casa familiar con jardín frontal",
-  },
-  {
-    id: "4",
-    direction: "Diagonal 20 #56-78",
-    colorChip: "purple",
-    barrio: "Oriente",
-    description: "Duplex con terraza y garaje",
-  },
-  {
-    id: "5",
-    direction: "Transversal 5 #23-45",
-    colorChip: "pink",
-    barrio: "Occidente",
-    description: "Casa esquinera con local comercial",
-  },
-  {
-    id: "6",
-    direction: "Calle 67 #89-12",
-    colorChip: "orange",
-    barrio: "Centro",
-    description: "Edificio de apartamentos, piso 3",
-  },
-  {
-    id: "7",
-    direction: "Carrera 45 #34-56",
-    colorChip: "lime",
-    barrio: "Norte",
-    description: "Casa con piscina y zona BBQ",
-  },
-  {
-    id: "8",
-    direction: "Avenida 30 #78-90",
-    colorChip: "light-green",
-    barrio: "Sur",
-    description: "Townhouse en conjunto cerrado",
-  },
-  {
-    id: "9",
-    direction: "Diagonal 12 #23-45",
-    colorChip: "light-blue",
-    barrio: "Oriente",
-    description: "Casa colonial restaurada",
-  },
-  {
-    id: "10",
-    direction: "Transversal 18 #67-89",
-    colorChip: "indigo",
-    barrio: "Occidente",
-    description: "Apartamento estudio amoblado",
-  },
-  {
-    id: "11",
-    direction: "Calle 90 #12-34",
-    colorChip: "grey",
-    barrio: "Centro",
-    description: "Penthouse con vista panorámica",
-  },
-];
-
-const FakeAPI = {
-  async fetch({ page, itemsPerPage, sortBy, search }) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const start = (page - 1) * itemsPerPage;
-        const end = start + itemsPerPage;
-        const items = house.slice().filter((item) => {
-          if (search.direction && search.direction !== "") {
-            return false;
-          }
-          return true;
-        });
-        if (sortBy.length) {
-          const sortKey = sortBy[0].key;
-          const sortOrder = sortBy[0].order;
-          items.sort((a, b) => {
-            const aValue = a[sortKey];
-            const bValue = b[sortKey];
-            return sortOrder === "desc" ? bValue - aValue : aValue - bValue;
-          });
-        }
-        const paginated = items.slice(start, end === -1 ? undefined : end);
-        resolve({ items: paginated, total: items.length });
-      }, 500);
-    });
-  },
-};
-const itemsPerPage = ref(5);
 const headers = ref([
   { title: "id", key: "id", align: "start", sortable: true },
   { title: "Dirección", key: "direction", align: "end" },
   { title: "Color", key: "colorChip", align: "end" },
-  { title: "Barrio", key: "barrio", align: "end" },
+  { title: "Barrio", key: "neighborhood", align: "end" },
   { title: "Descripción", key: "description", align: "end" },
+  { title: "Fecha de creación", key: "created_at", align: "end" },
+  { title: "Fecha de última actualización", key: "created_at", align: "end" },
   { title: "", key: "actions", align: "end" },
 ]);
-const serverItems = ref([]);
-const loading = ref(true);
-const totalItems = ref(0);
+
+const page = ref(1);
 const direction = ref("");
 const search = ref("");
 
-function loadItems({ page, itemsPerPage, sortBy }) {
-  loading.value = true;
-  FakeAPI.fetch({ page, itemsPerPage, sortBy, search: { direction: direction.value } }).then(({ items, total }) => {
-    serverItems.value = items;
-    totalItems.value = total;
-    loading.value = false;
-  });
-}
 watch(direction, () => {
   search.value = String(Date.now());
 });
@@ -158,15 +51,28 @@ function SelectItem(item: House) {
     houseSelect.value = { ...DEFAULT_HOUSE };
   }
 }
+
+function reset() {
+  houseSelect.value = { ...DEFAULT_HOUSE };
+  fetchHouses();
+}
+
+onMounted(() => {
+  reset();
+});
+
+function loadItems(options: any) {
+  console.log(options);
+  // fetchHouses({ page, itemsPerPage, sortBy, sortDesc });
+}
 </script>
 
 <template>
   <v-data-table-server
-    v-model:items-per-page="itemsPerPage"
+    v-model:page="page"
     :headers="headers"
-    :items="serverItems"
-    :items-length="totalItems"
-    :loading="loading"
+    :items="houses"
+    :loading="cargando"
     :search="search"
     no-data-text="No hay casas registradas"
     item-value="id"
@@ -208,17 +114,28 @@ function SelectItem(item: House) {
     </template>
     <template v-slot:tfoot>
       <tr>
-        <td>
-          <v-text-field
-            v-model="direction"
-            class="ma-2"
-            density="compact"
-            placeholder="Minimum direction"
-            type="number"
-            hide-details
-          ></v-text-field>
+        <td :colspan="headers.length">
+          <v-row no-gutters dense>
+            <v-col cols="3">
+              <v-text-field
+                v-model="direction"
+                class="ma-2"
+                density="compact"
+                placeholder="Buscar por dirección"
+                type="text"
+                variant="outlined"
+                :prepend-inner-icon="mdiMagnify"
+                hide-details
+              ></v-text-field>
+            </v-col>
+          </v-row>
         </td>
       </tr>
+    </template>
+    <template v-slot:bottom>
+      <div class="text-center pt-2">
+        <v-pagination v-model="page" :length="pageLength" total-visible="5"></v-pagination>
+      </div>
     </template>
   </v-data-table-server>
 </template>

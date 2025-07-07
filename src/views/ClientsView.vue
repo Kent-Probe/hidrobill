@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { mdiAccount, mdiCancel, mdiEmoticonSad, mdiPlus } from "@mdi/js";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { VDataTable } from "vuetify/components";
 import TableClients from "../components/TableClients.vue";
-import { Client } from "../models/clients";
+import { ClientWithInfo } from "../models/clients";
 import { formatDate, formatPrice, numberToDate } from "../utilities/format";
 type Header = VDataTable["$props"]["headers"];
 
-const CLIENT_SELECT_DEFAULT: Client = {
+const CLIENT_SELECT_DEFAULT: ClientWithInfo = {
   id: "",
   document: "",
   name: "",
@@ -16,35 +16,54 @@ const CLIENT_SELECT_DEFAULT: Client = {
   gender: "",
   created_at: "",
   updated_at: "",
-  houses: [],
   contracts: [],
-  payments: [],
 };
 
-const userSelect = ref<Client>({ ...CLIENT_SELECT_DEFAULT });
+const selectedClient = ref<ClientWithInfo>({ ...CLIENT_SELECT_DEFAULT });
 
 const headers: Header = [
   { title: "Código", key: "id", sortable: true, align: "start" },
-  { title: "Fecha de pago", key: "paymentDate", sortable: true, value: (item) => formatDate(item.date) },
-  { title: "Valor total pagado", key: "paymentTotal", sortable: true, value: (item) => formatPrice(item.valueTotal) },
-  { title: "Estado", key: "paymentState", sortable: true },
+  { title: "Fecha de pago", key: "payment_date", sortable: true, value: (item) => formatDate(item.date) },
+  { title: "Valor total pagado", key: "payment_total", sortable: true, value: (item) => formatPrice(item.value_total) },
+  { title: "Estado", key: "payment_state", sortable: true },
   { title: "Descripción", key: "description", sortable: true },
   { title: "Acciones", key: "actions", sortable: false, align: "end" },
 ];
 
 function invalidPaymenr(id: string) {
   console.log(`Invalid payment with ID: ${id}`);
-  // Aquí puedes agregar la lógica para invalidar el pago
+  // Aquí agregar :: invalidar el pago
 }
+
+const paymentsOfSelectedClient = computed(() => {
+  // Si no hay cliente seleccionado o no tiene contratos, devuelve un array vacío.
+  if (!selectedClient.value || !selectedClient.value.contracts) {
+    return [];
+  }
+
+  // flatMap es perfecto para esto. Recorre cada contrato y devuelve su array de pagos.
+  // Luego, flatMap aplana todos esos arrays en uno solo.
+  return selectedClient.value.contracts.flatMap((contract) => {
+    // Si un contrato no tiene pagos, devuelve un array vacío para ese contrato.
+    if (!contract.payments) return [];
+
+    // Enriquece cada pago con el ID del contrato para mostrarlo en la tabla.
+    return contract.payments.map((payment) => ({
+      ...payment, // Copia todas las propiedades originales del pago
+      contractId: contract.id, // Añade el ID del contrato
+      houseDirection: contract.house?.direction || "N/A", // Añade la dirección de la casa
+    }));
+  });
+});
 </script>
 
 <template>
   <v-row no-gutter>
     <v-col cols="12" lg="6" class="pa-4 container_row">
-      <TableClients v-model="userSelect" />
+      <TableClients v-model="selectedClient" />
     </v-col>
 
-    <v-col v-if="userSelect.id === ''" cols="12" lg="6" class="pa-4 container_row">
+    <v-col v-if="selectedClient.id === ''" cols="12" lg="6" class="pa-4 container_row">
       <v-empty-state :icon="mdiEmoticonSad">
         <template v-slot:media>
           <v-icon color="surface-variant"></v-icon>
@@ -67,11 +86,11 @@ function invalidPaymenr(id: string) {
       </v-empty-state>
     </v-col>
 
-    <v-col v-else-if="userSelect.id !== ''" cols="12" lg="6" class="pa-4 container_row">
+    <v-col v-else-if="selectedClient.id !== ''" cols="12" lg="6" class="pa-4 container_row">
       <v-toolbar flat class="mb-4 rounded-md">
         <v-toolbar-title>
           <v-icon color="medium-emphasis" :icon="mdiAccount" size="x-small" start></v-icon>
-          Cliente {{ userSelect.id }}
+          Cliente {{ selectedClient.id }}
         </v-toolbar-title>
 
         <v-btn
@@ -87,13 +106,13 @@ function invalidPaymenr(id: string) {
         <v-col cols="12">
           <v-text-field
             label="Cliente seleccionado"
-            :model-value="`${userSelect.document} - ${userSelect.name} ${userSelect.lastname}`"
+            :model-value="`${selectedClient.document} - ${selectedClient.name} ${selectedClient.lastname}`"
             readonly
           ></v-text-field>
         </v-col>
         <v-col cols="12">
           <v-text-field
-            :model-value="userSelect.houses.map((e) => `${e.id} : ${e.direction}`).join(' ')"
+            :model-value="selectedClient.contracts.map((e) => `${e.house?.id} : ${e.house?.direction}`).join(' ')"
             label="Casas asignadas"
             readonly
           >
@@ -103,14 +122,14 @@ function invalidPaymenr(id: string) {
         <v-col cols="12" md="6">
           <v-text-field
             label="Fecha de creación del cliente"
-            :model-value="formatDate(userSelect.created_at)"
+            :model-value="formatDate(selectedClient.created_at)"
             readonly
           ></v-text-field>
         </v-col>
         <v-col cols="12" md="6">
           <v-text-field
             label="Fecha de última actualización del cliente"
-            :model-value="formatDate(userSelect.updated_at)"
+            :model-value="formatDate(selectedClient.updated_at)"
             readonly
           ></v-text-field>
         </v-col>
@@ -119,7 +138,7 @@ function invalidPaymenr(id: string) {
           <h6 class="text-h6 mb-2">
             <strong>Contratos activos</strong>
           </h6>
-          <v-row dense="dense" v-for="(contract, index) in userSelect.contracts" :key="index">
+          <v-row dense="dense" v-for="(contract, index) in selectedClient.contracts" :key="index">
             <v-col cols="12" md="6">
               <v-text-field
                 :label="`Fecha de pago oportuno del contrato ${contract.id}`"
@@ -138,7 +157,13 @@ function invalidPaymenr(id: string) {
         </v-col>
 
         <v-col cols="12">
-          <v-data-table-virtual :headers="headers" :items="userSelect.payments" height="300" fixed-header>
+          <v-data-table-virtual
+            no-data-text="No hay datos que mostrar"
+            :headers="headers"
+            :items="paymentsOfSelectedClient"
+            height="300"
+            fixed-header
+          >
             <template v-slot:item.actions="{ item }">
               <v-icon color="error" :icon="mdiCancel" size="small" @click="invalidPaymenr(item.id)"></v-icon>
             </template>
