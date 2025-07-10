@@ -2,11 +2,17 @@ import Database from "@tauri-apps/plugin-sql";
 import { Client, ClientWithInfo } from "../../models/clients";
 import { House } from "../../models/houses";
 
-export async function getClients(limit: number, page: number): Promise<Client[]> {
+export async function getClients(limit: number, page: number, search: string): Promise<Client[]> {
   // Simula una llamada a la API
   const offset = (page - 1) * limit;
   const db = await Database.load("sqlite:hidrobill.db");
-  const clientsResult = await db.select("SELECT * FROM client limit $1 offset $2", [limit, offset]);
+  const clientsResult =
+    search === "" || search === undefined
+      ? await db.select("SELECT * FROM client WHERE state != 'Desactivado' LIMIT $1 OFFSET $2", [limit, offset])
+      : await db.select(
+          "SELECT * FROM client WHERE names LIKE $1 OR lastnames LIKE $1 OR document LIKE $1 LIMIT $2 OFFSET $3",
+          [`%${search}%`, limit, offset]
+        );
 
   const clientIds = clientsResult.map((c) => c.id);
 
@@ -26,6 +32,7 @@ export async function getClients(limit: number, page: number): Promise<Client[]>
         lastname: row.lastnames,
         state: row.state,
         gender: row.gender,
+        phone: row.phone,
         created_at: row.created_at,
         updated_at: row.updated_at,
         contracts: [],
@@ -84,6 +91,7 @@ export async function getClients(limit: number, page: number): Promise<Client[]>
       lastname: row.lastnames,
       state: row.state,
       gender: row.gender,
+      phone: row.phone,
       created_at: row.created_at,
       updated_at: row.updated_at,
       contracts: contractsById.get(row.id) || [],

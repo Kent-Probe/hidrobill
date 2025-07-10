@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { mdiAccountMultiple, mdiHomeEdit, mdiMagnify, mdiPlus } from "@mdi/js";
 import { storeToRefs } from "pinia";
-import { onMounted, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import { House } from "../models/houses";
 import { useHousesStore } from "../stores/house";
 
@@ -54,16 +54,13 @@ function SelectItem(item: House) {
 
 function reset() {
   houseSelect.value = { ...DEFAULT_HOUSE };
-  fetchHouses();
 }
-
-onMounted(() => {
-  reset();
-});
 
 function loadItems(options: any) {
   console.log(options);
   // fetchHouses({ page, itemsPerPage, sortBy, sortDesc });
+  reset();
+  fetchHouses();
 }
 </script>
 
@@ -73,8 +70,11 @@ function loadItems(options: any) {
     :headers="headers"
     :items="houses"
     :loading="cargando"
+    :items-per-page="5"
     :search="search"
     no-data-text="No hay casas registradas"
+    items-length="5"
+    loading-text="Cargando clientes..."
     item-value="id"
     fixed-header
     hover

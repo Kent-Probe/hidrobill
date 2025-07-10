@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS client (
 -- Tabla de House
 CREATE TABLE IF NOT EXISTS house (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    direction TEXT NOT NULL,
+    direction TEXT NOT NULL UNIQUE,
     neighborhood TEXT,
     description TEXT,
     colorChip TEXT NOT NULL DEFAULT 'green',
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS payment (
     other_charges INTEGER NOT NULL DEFAULT 0,
     payment_state TEXT NOT NULL DEFAULT 'PENDIENTE',
     description TEXT,
-    FOREIGN KEY(id_contract) REFERENCES contract(id)
+    FOREIGN KEY(id_contract) REFERENCES contract(id) ON DELETE CASCADE
 );
 
 CREATE TABLE USER (
@@ -65,5 +65,19 @@ CREATE TABLE USER (
     password TEXT, 
     state TEXT NOT NULL DEFAULT 'inactivo'
 ); 
+
+-- Índices para valores únicos
+CREATE INDEX IF NOT EXISTS idx_client_document ON client(document);
+CREATE INDEX IF NOT EXISTS idx_house_direction ON house(direction);
+CREATE INDEX IF NOT EXISTS idx_user_username ON user(username);
+
+-- Índices para names y lastnames de client
+CREATE INDEX IF NOT EXISTS idx_client_names ON client(names);
+CREATE INDEX IF NOT EXISTS idx_client_lastnames ON client(lastnames);
+
+-- Índices adicionales para foreign keys (recomendado)
+CREATE INDEX IF NOT EXISTS idx_contract_id_client ON contract(id_client);
+CREATE INDEX IF NOT EXISTS idx_contract_id_house ON contract(id_house);
+CREATE INDEX IF NOT EXISTS idx_payment_id_contract ON payment(id_contract);
 
 -- INSERT INTO USER (name, username, password, state) VALUES ('Admin', 'admin', '$2b$12$9t/UG.tjW4mEXyCxFF1HMO0s75quMG6MmYeSWpPkNQt.qceVAduz.', 'activo');

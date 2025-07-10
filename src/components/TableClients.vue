@@ -5,13 +5,15 @@ import {
   mdiDelete,
   mdiFaceMan,
   mdiFaceWoman,
+  mdiHomePlus,
   mdiMagnify,
   mdiPencil,
   mdiPlus,
 } from "@mdi/js";
 import { storeToRefs } from "pinia";
-import { onMounted, ref, shallowRef, watch } from "vue";
+import { ref, shallowRef, watch } from "vue";
 import { ClientWithInfo } from "../models/clients";
+import { House } from "../models/houses";
 import { useClientsStore } from "../stores/clients";
 import ComboBoxHouses from "./ComboBoxHouses.vue";
 
@@ -24,8 +26,11 @@ const DEFAULT_RECORD: ClientWithInfo = {
   updated_at: "",
   state: "Al dia",
   gender: "",
+  phone: "",
   contracts: [],
 };
+
+const DEFAULT_HOUSE: House[] = [];
 
 const selectClient = defineModel<ClientWithInfo>({
   required: true,
@@ -35,38 +40,34 @@ const selectClient = defineModel<ClientWithInfo>({
 
 const clientsStore = useClientsStore();
 const { clients, cargando, pageLength } = storeToRefs(clientsStore);
-const { fetchClients } = clientsStore;
+const { fetchClients, createClient, createClientWithContracts, updateClient, alterStateClient } = clientsStore;
+const resultsCreateorEditClients = ref({ success: false, message: "" });
 
+const search = ref();
 const page = ref(1);
 const record = ref({ ...DEFAULT_RECORD });
+const recordHouse = ref(DEFAULT_HOUSE);
 const form = ref();
 const formHouses = ref();
 const dialog = shallowRef(false);
 const isEditing = shallowRef(false);
 const rules = [(v) => !!v || "Este campo es obligatorio", (v) => v.length >= 3 || "Mínimo 3 caracteres"];
 
-watch(page, async (newPage) => {
-  await fetchClients(8, newPage);
-});
-
 const headers = [
   { title: "Documento", key: "document", align: "start" },
   { title: "Nombres", key: "name" },
   { title: "Apellidos", key: "lastname" },
   { title: "Estado", key: "state" },
-  { title: "Casa", key: "houses", align: "end", maxWith: "50px" },
+  { title: "Casa", key: "houses", align: "end", maxWith: "50px", sortable: false },
   { title: "Actions", key: "actions", align: "end", sortable: false },
 ];
 
 const step = ref(1);
 
-onMounted(() => {
-  reset();
-});
-
 watch(dialog, (val) => {
   if (!val) {
     record.value = { ...DEFAULT_RECORD };
+    recordHouse.value = [];
     isEditing.value = false;
     step.value = 1;
   }
@@ -75,6 +76,7 @@ watch(dialog, (val) => {
 function add() {
   isEditing.value = false;
   record.value = { ...DEFAULT_RECORD };
+  recordHouse.value = [];
   dialog.value = true;
 }
 
@@ -94,25 +96,35 @@ function edit(id) {
   dialog.value = true;
 }
 
-function remove(id) {
-  const index = clients.value.findIndex((client) => client.id === id);
-  clients.value.splice(index, 1);
+async function alterState(id: string | number, isActived: boolean) {
+  await alterStateClient(id, isActived);
+  await fetchClients();
 }
 
-function save() {
+async function save() {
   if (isEditing.value) {
-    const index = clients.value.findIndex((client) => client.id === record.value.id);
-    clients.value[index] = record.value;
+    const result = await updateClient(record.value);
+    await fetchClients();
+    resultsCreateorEditClients.value = {
+      message: result.message,
+      success: result.success,
+    };
   } else {
-    clients.value.push(record.value);
+    const result = await createClientWithContracts(record.value);
+    await fetchClients();
+    resultsCreateorEditClients.value = {
+      message: result.message,
+      success: result.success,
+    };
     record.value = { ...DEFAULT_RECORD };
+    recordHouse.value = [];
   }
 }
 
 async function reset() {
   dialog.value = false;
   record.value = { ...DEFAULT_RECORD };
-  clients.value = fetchClients();
+  recordHouse.value = [];
   step.value = 1;
 }
 
@@ -121,32 +133,49 @@ async function nexStep() {
   if (validForm.valid !== undefined && !validForm.valid) {
     return;
   }
-  if (record.value.houses.length === 0) {
-    record.value.houses.push({ id: "C-000", direction: "", colorChip: "green", barrio: "", description: "" });
+  if (isEditing.value) {
+    await save();
+    step.value = 3;
+    return;
   }
-  for (let house of record.value.houses) {
-    record.value.contracts.push({
-      id: "C-000",
-      id_casa: house.id,
-      id_cliente: record.value.id,
-      startDate: new Date().toISOString(),
-      payday: 1,
-      payday_due: 4,
-      description: "",
-      state: "Activo",
-      monthlyPayment: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
+  if (recordHouse.value.length === 0) {
+    recordHouse.value.push({ id: "C-000", direction: "", colorChip: "green", neighborhood: "", description: "" });
+  }
+  if (step.value === 1) {
+    for (let house of recordHouse.value) {
+      record.value.contracts.push({
+        id_house: house.id,
+        id_client: record.value.id,
+        start_date: new Date().toISOString(),
+        payday: 1,
+        payday_due: 4,
+        description: "",
+        state: "Activo",
+        monthlyPayment: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        house: {
+          id: house.id,
+          direction: house.direction,
+          colorChip: house.colorChip,
+          neighborhood: house.neighborhood,
+        },
+      });
+    }
   }
   if (step.value === 2) {
     const validFormHouses = await formHouses.value.validate();
     if (validFormHouses.valid !== undefined && !validFormHouses.valid) {
       return;
     }
+    for (let [index, house] of recordHouse.value?.entries()) {
+      record.value.contracts[index].house.direction = house.direction;
+      record.value.contracts[index].house.neighborhood = house.neighborhood;
+      record.value.contracts[index].house.description = house.description;
+    }
   }
   if (step.value === 2) {
-    save();
+    await save();
   }
   step.value++;
 }
@@ -154,8 +183,20 @@ async function nexStep() {
 async function selectClientHandler(client: ClientWithInfo) {
   if (client) {
     selectClient.value = client;
+    record.value = client;
   } else {
     selectClient.value = { ...DEFAULT_RECORD };
+  }
+}
+
+async function loadItems(options: any) {
+  const searchValue: string | undefined = search.value;
+  const itemsPerPage: number = 8;
+  const pageOpt: number = options.page || 1;
+  if (searchValue) {
+    await fetchClients(itemsPerPage, pageOpt, searchValue);
+  } else {
+    await fetchClients(itemsPerPage, pageOpt);
   }
 }
 </script>
@@ -163,16 +204,17 @@ async function selectClientHandler(client: ClientWithInfo) {
 <template>
   <v-sheet border rounded>
     <v-data-table-server
-      :v-model:page="page"
-      no-data-text="Sin datos a mostrar"
+      v-model:page="page"
+      :search="search"
       :headers="headers"
-      :items="cargando === true ? [] : clients"
+      :items="clients"
       :loading="cargando"
-      :items-per-page="8"
-      items-length="8"
+      no-data-text="Sin datos a mostrar"
       loading-text="Cargando clientes..."
       fixed-header
+      items-length="100"
       hover
+      @update:options="loadItems"
     >
       <template v-slot:top>
         <v-toolbar flat>
@@ -192,9 +234,10 @@ async function selectClientHandler(client: ClientWithInfo) {
           ></v-btn>
         </v-toolbar>
         <div class="pa-4">
-          <!-- v-model="searcsh" -->
           <v-text-field
-            label="Search"
+            v-model="search"
+            label="Buscar"
+            placeholder="Buscar por documento, nombre o apellido"
             :prepend-inner-icon="mdiMagnify"
             variant="outlined"
             hide-details
@@ -244,9 +287,14 @@ async function selectClientHandler(client: ClientWithInfo) {
           </td>
           <td class="text-end">
             <div class="d-flex ga-2 justify-end">
-              <v-icon color="medium-emphasis" :icon="mdiPencil" size="small" @click="edit(item.id)"></v-icon>
+              <v-icon color="success" :icon="mdiPencil" size="small" @click="edit(item.id)"></v-icon>
 
-              <v-icon color="medium-emphasis" :icon="mdiDelete" size="small" @click="remove(item.id)"></v-icon>
+              <v-icon
+                :color="item.state === 'Desactivado' ? 'info' : 'error'"
+                :icon="item.state === 'Desactivado' ? mdiHomePlus : mdiDelete"
+                size="small"
+                @click="alterState(item.id, item.state !== 'Desactivado')"
+              ></v-icon>
             </div>
           </td>
         </tr>
@@ -271,7 +319,7 @@ async function selectClientHandler(client: ClientWithInfo) {
             <v-form ref="form">
               <v-row>
                 <v-col cols="12">
-                  <v-text-field :rules="rules" v-model="record.id" label="Cédula"></v-text-field>
+                  <v-text-field :rules="rules" v-model="record.document" label="Cédula"></v-text-field>
                 </v-col>
 
                 <v-col cols="12" md="6">
@@ -290,17 +338,10 @@ async function selectClientHandler(client: ClientWithInfo) {
                   ></v-select>
                 </v-col>
                 <v-col cols="12" md="6">
-                  <v-select
-                    :rules="rules"
-                    v-model="record.state"
-                    :items="['Al dia', 'Desactivado']"
-                    label="Estado"
-                    hint="Al dia: Cliente activo, Desactivado: Cliente inactivo"
-                    persistent-hint
-                  ></v-select>
+                  <v-text-field :rules="rules" v-model="record.phone" label="Número de celular"></v-text-field>
                 </v-col>
-                <v-col cols="12">
-                  <ComboBoxHouses v-model="record.houses" />
+                <v-col v-if="!isEditing" cols="12">
+                  <ComboBoxHouses v-model="recordHouse" />
                 </v-col>
               </v-row>
             </v-form>
@@ -309,7 +350,7 @@ async function selectClientHandler(client: ClientWithInfo) {
             <v-form ref="formHouses">
               <v-card
                 variant="text"
-                v-for="(item, index) in record.houses"
+                v-for="(item, index) in recordHouse"
                 :title="`${item.id === 'C-000' ? 'Casa no encontrada' : 'Casa'}: ${item.id}`"
                 :key="item.id"
                 class="mb-2"
@@ -341,7 +382,7 @@ async function selectClientHandler(client: ClientWithInfo) {
                       </v-col>
                       <v-col cols="12">
                         <v-text-field
-                          v-model="item.barrio"
+                          v-model="item.neighborhood"
                           label="barrio"
                           :rules="[(v) => !!v || 'Este campo es obligatorio']"
                           :disabled="item.id !== 'C-000'"
@@ -351,7 +392,6 @@ async function selectClientHandler(client: ClientWithInfo) {
                         <v-text-field
                           v-model="item.description"
                           label="Descripción"
-                          :rules="[(v) => !!v || 'Este campo es obligatorio']"
                           :disabled="item.id !== 'C-000'"
                         ></v-text-field>
                       </v-col>
@@ -361,7 +401,7 @@ async function selectClientHandler(client: ClientWithInfo) {
                     <v-row>
                       <v-col cols="12">
                         <v-date-input
-                          v-model="record.contracts[index].startDate"
+                          v-model="record.contracts[index].start_date"
                           label="Fecha de inicio del contrato"
                           :format="(val) => new Date(val).toLocaleDateString()"
                           :rules="[(v) => !!v || 'Este campo es obligatorio']"
@@ -376,8 +416,8 @@ async function selectClientHandler(client: ClientWithInfo) {
                           v-model="record.contracts[index].payday"
                           label="Día del mes en el que se paga"
                           :rules="[(v) => !!v || 'Este campo es obligatorio']"
-                          min="1"
-                          max="28"
+                          :min="1"
+                          :max="28"
                           control-variant="split"
                           persistent-hint
                         ></v-number-input>
@@ -387,8 +427,8 @@ async function selectClientHandler(client: ClientWithInfo) {
                           v-model="record.contracts[index].payday_due"
                           label="Día del mes en el que se vence el pago"
                           :rules="[(v) => !!v || 'Este campo es obligatorio']"
-                          min="1"
-                          max="28"
+                          :min="1"
+                          :max="28"
                           control-variant="split"
                           persistent-hint
                         ></v-number-input>
@@ -398,7 +438,7 @@ async function selectClientHandler(client: ClientWithInfo) {
                           v-model="record.contracts[index].monthlyPayment"
                           label="Pago de la mensualidad"
                           :rules="[(v) => !!v || 'Este campo es obligatorio']"
-                          min="100"
+                          :min="100"
                           control-variant="split"
                           persistent-hint
                         ></v-number-input>
@@ -423,10 +463,10 @@ async function selectClientHandler(client: ClientWithInfo) {
           <v-window-item :value="3">
             <v-row>
               <v-col cols="12">
-                <v-alert type="success" variant="flat">
-                  <div class="text-h6">¡Listo!</div>
+                <v-alert :type="resultsCreateorEditClients.success ? 'success' : 'error'" variant="flat">
+                  <div class="text-h6">{{ resultsCreateorEditClients.success ? "Listo!" : "Error!" }}</div>
                   <div class="text-body-2">
-                    Has creado un nuevo cliente. Puedes continuar para agregar más información o guardar los cambios.
+                    {{ resultsCreateorEditClients.message }}
                   </div>
                 </v-alert>
               </v-col>
@@ -444,6 +484,7 @@ async function selectClientHandler(client: ClientWithInfo) {
           variant="elevated"
           base-color="success"
           @click="nexStep"
+          :loading="cargando"
         ></v-btn>
       </v-card-actions>
     </v-card>

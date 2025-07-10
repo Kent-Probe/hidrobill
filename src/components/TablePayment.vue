@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { mdiAccountMultiple, mdiHomeEdit, mdiMagnify, mdiPlus } from "@mdi/js";
 import { storeToRefs } from "pinia";
-import { onMounted, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import { usePaymetsStore } from "../stores/pagos";
 import { formatDate, formatPrice } from "../utilities/format";
 
 const storePayments = usePaymetsStore();
 const { cargando, pagos, pageLength } = storeToRefs(storePayments);
 const { fetchPayments } = storePayments;
+const page = ref(1);
 
 const DEFAULT_PAYMENT: Payment = {
   id: "",
@@ -58,8 +59,7 @@ const direction = ref("");
 const search = ref("");
 
 function loadItems(value) {
-  console.log(value);
-  console.log("-------- loadItems --------");
+  fetchPayments();
 }
 
 watch(direction, () => {
@@ -73,10 +73,6 @@ function SelectItem(item: Payment) {
     paymentSelect.value = { ...DEFAULT_PAYMENT };
   }
 }
-
-onMounted(() => {
-  fetchPayments();
-});
 </script>
 
 <template>
@@ -85,6 +81,7 @@ onMounted(() => {
     :items="pagos"
     :loading="cargando"
     :search="search"
+    :items-length="pageLength"
     no-data-text="No hay pagos registradas"
     item-value="id"
     fixed-header

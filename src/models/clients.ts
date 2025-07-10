@@ -7,6 +7,7 @@ export type Client = {
   lastname: string;
   state: "Desactivado" | "Al dia" | "En mora";
   gender: "Masculino" | "Femenino";
+  phone: string;
   created_at: string;
   updated_at: string;
 };
@@ -18,6 +19,7 @@ export type ClientWithInfo = {
   lastname: string;
   state: "Desactivado" | "Al dia" | "En mora";
   gender: "Masculino" | "Femenino";
+  phone: string;
   created_at: string;
   updated_at: string;
   contracts: Contract[] | null;

@@ -36,5 +36,9 @@ export function numberToDate(
 }
 
 export function formatPrice(value: number) {
-  return `$${value.toFixed(0).replace(/\d(?=(\d{3})+$)/g, "$&,")}`;
+  try {
+    return `$${value.toFixed(0).replace(/\d(?=(\d{3})+$)/g, "$&,")}`;
+  } catch (error) {
+    return `$${value}`;
+  }
 }

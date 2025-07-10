@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import ClientsView from "../views/ClientsView.vue";
+import GeneratorImgView from "../views/GeneratorImgView.vue";
 import HousesView from "../views/HousesView.vue";
 import LoginViews from "../views/LoginView.vue";
 import MainLayoutView from "../views/MainLayoutView.vue";
@@ -37,6 +38,14 @@ const router = createRouter({
         layout: true,
       },
       children: [
+        {
+          path: "generate-bill/:id",
+          name: "generate-bill",
+          component: GeneratorImgView,
+          meta: {
+            name: "Generar recibo",
+          },
+        },
         {
           path: "clients",
           name: "Clients",

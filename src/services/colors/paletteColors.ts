@@ -1,4 +1,4 @@
-export const paletteColors = [
+const paletteColors = [
   "amber",
   "blue",
   "blue-grey",
@@ -19,3 +19,5 @@ export const paletteColors = [
   "teal",
   "yellow",
 ];
+
+export { paletteColors };
