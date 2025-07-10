@@ -4,28 +4,33 @@ import { onMounted } from "vue";
 import { useRouter } from "vue-router";
 import GeneratorImage from "../components/GeneratorImage.vue";
 import { usePaymetsStore } from "../stores/pagos";
-// const contractInfo = ref(null);
-// const paymentInfo = ref(null);
-// const clientName = ref("");
+
 const router = useRouter();
 const storePayments = usePaymetsStore();
-const { cargando, pago, result } = storeToRefs(storePayments);
+const { cargando, pago } = storeToRefs(storePayments);
 const { fetchPaymentWithDetails } = storePayments;
 
 onMounted(async () => {
-  if (!router.currentRoute.value.params) {
+  console.log("----------------------------------------------------");
+  const paymentId = router.currentRoute.value.params.id as string;
+
+  if (!paymentId) {
     router.back();
+    return;
   }
-  const paymentResult = await fetchPaymentWithDetails(router.currentRoute.value.params.id);
-  if (!paymentResult) {
+
+  const success = await fetchPaymentWithDetails(paymentId);
+
+  console.log(success);
+
+  if (!success) {
+    console.error("No se pudo cargar el pago, redirigiendo.");
     router.back();
   }
 });
 </script>
 
 <template>
-  <v-skeleton-loader v-if="cargando" type="card"></v-skeleton-loader>
-  <!-- ... tu otro contenido ... -->
-  <GeneratorImage v-model="pago" v-else />
-  <!-- ... -->
+  <v-skeleton-loader v-if="cargando || !pago" type="card"></v-skeleton-loader>
+  <GeneratorImage v-else v-model="pago" />
 </template>

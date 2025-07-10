@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS client (
     lastnames TEXT NOT NULL,
     phone TEXT,
     state TEXT NOT NULL DEFAULT 'Al dia',
-    gender TEXT NOT NULL DEFAULT 'Masculino',
+    gender TEXT NOT NULL DEFAULT 'MASCULINO',
     created_at DATETIME NOT NULL DEFAULT (datetime('now', 'localtime')),
     updated_at DATETIME NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS contract (
     monthlyPayment INTEGER NOT NULL DEFAULT 0,
     payday INTEGER NOT NULL DEFAULT '1',
     payday_due INTEGER NOT NULL DEFAULT '4',
-    state TEXT NOT NULL DEFAULT 'Activo',
+    state TEXT NOT NULL DEFAULT 'ACTIVO',
     description TEXT,
     created_at DATETIME NOT NULL DEFAULT (datetime('now', 'localtime')),
     updated_at DATETIME NOT NULL DEFAULT (datetime('now', 'localtime')),
@@ -50,6 +50,8 @@ CREATE TABLE IF NOT EXISTS payment (
     reconnection INTEGER NOT NULL DEFAULT 0,
     enrollment INTEGER NOT NULL DEFAULT 0,
     monthly_payment INTEGER NOT NULL DEFAULT 0,
+    amount_monthly INTEGER NOT NULL DEFAULT 0,
+    monthly_type_amount TEXT NOT NULL DEFAULT 'FIXED',
     payments INTEGER NOT NULL DEFAULT 0,
     late_fee INTEGER NOT NULL DEFAULT 0,
     other_charges INTEGER NOT NULL DEFAULT 0,

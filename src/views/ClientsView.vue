@@ -3,11 +3,13 @@ import {
   mdiAccount,
   mdiCalendar,
   mdiCancel,
+  mdiDownload,
   mdiEmoticonSad,
   mdiHomeEdit,
   mdiNewspaper,
   mdiPencil,
   mdiPlus,
+  mdiUpdate,
 } from "@mdi/js";
 import { storeToRefs } from "pinia";
 import { computed, ref, watch } from "vue";
@@ -65,6 +67,8 @@ const DEFAULT_PAYMENT: Payment = {
   remaining_debt: 0,
   enrollment: 0,
   value_total: 0,
+  amount_monthly: 1,
+  monthly_type_amount: "FIXED", // Puede ser "FIXED", "UP" o "DOWN"
   payments: 0,
   late_fee: 0,
   other_charges: 0,
@@ -94,11 +98,6 @@ const headers: Header = [
   { title: "Descripción", key: "description", sortable: false },
   { title: "Acciones", key: "actions", sortable: false, align: "end" },
 ];
-
-function invalidPayment(id: string) {
-  console.log(`Invalid payment with ID: ${id}`);
-  // Aquí agregar :: invalidar el pago
-}
 
 const paymentsOfSelectedClient = computed(() => {
   // Si no hay cliente seleccionado o no tiene contratos, devuelve un array vacío.
@@ -150,6 +149,9 @@ async function nexStep() {
   if (selectedContract.value.id === "") {
     return;
   }
+  if (step.value === 1 && selectedContract.value.id !== "") {
+    selectedPayment.value.monthly_payment = selectedContract.value.monthlyPayment;
+  }
   if (step.value === 2) {
     const paymentToSend = {
       ...selectedPayment.value,
@@ -157,12 +159,20 @@ async function nexStep() {
       value_total: valueTotal.value,
       id_contract: selectedContract.value.id,
     };
+    console.log(paymentToSend);
     selectedPayment.value = paymentToSend;
     const paymentResult = await createPayment(paymentToSend);
+    await fetchClients();
     resultInScreen.value = {
       success: paymentResult.success,
       message: paymentResult.message,
     };
+  }
+  if (step.value === 3) {
+    step.value = 1;
+    dialog.value = false;
+    selectedClient.value = { ...CLIENT_SELECT_DEFAULT };
+    return;
   }
   step.value++;
 }
@@ -172,7 +182,7 @@ watch(
   (newValue) => {
     // Actualiza el valor total del pago automáticamente al cambiar otros campos
     valueTotal.value =
-      newValue.monthly_payment +
+      newValue.monthly_payment * newValue.amount_monthly +
       newValue.reconnection +
       newValue.late_fee +
       newValue.enrollment +
@@ -186,12 +196,53 @@ watch(
 
 const storePayments = usePaymetsStore();
 const { cargando, result } = storeToRefs(storePayments);
-const { createPayment } = storePayments;
+const { createPayment, updatePaymentStatus } = storePayments;
+const typePymentToSend = ref("Fijo");
+const toPaymentType = ref("Desde este mes hasta el último mes");
 
-const sendToDonwloadRecebit = () => {
+watch(
+  typePymentToSend,
+  (val) => {
+    console.log("00000000000001");
+    const date = new Date();
+    const dateEnd = new Date();
+    const monthly = date.toLocaleString("default", { month: "long" });
+
+    dateEnd.setMonth(date.getMonth() + selectedPayment.value.amount_monthly - 1);
+    const monthlyEnd = dateEnd.toLocaleString("default", { month: "long" });
+
+    dateEnd.setMonth(date.getMonth() - selectedPayment.value.amount_monthly + 1);
+    const monthlyStart = dateEnd.toLocaleString("default", { month: "long" });
+    if (val === "Fijo") {
+      selectedPayment.value.monthly_type_amount = "FIXED";
+      selectedPayment.value.amount_monthly = 1;
+      toPaymentType.value = `Solo el mes: ${monthly}`;
+    } else if (val === "A partir de este mes") {
+      selectedPayment.value.monthly_type_amount = "UP";
+      toPaymentType.value = `Desde ${monthly} hasta: ${monthlyEnd}`;
+    } else if (val === "Este mes es el último") {
+      selectedPayment.value.monthly_type_amount = "DOWN";
+      toPaymentType.value = `Desde ${monthlyStart} hasta: ${monthly}`;
+    }
+  },
+  {
+    deep: true,
+    immediate: true,
+  }
+);
+
+async function activatedPayment(id: string, newStatus: string) {
+  const result = await updatePaymentStatus(id, newStatus);
+  if (result.success) {
+    await fetchClients();
+    selectedClient.value = { ...CLIENT_SELECT_DEFAULT };
+  }
+}
+
+const sendToDonwloadRecebit = (id: string) => {
   router.push({
     name: "generate-bill",
-    params: { id: result.value.id_payment },
+    params: { id: id },
   });
 };
 
@@ -233,9 +284,6 @@ const verifyHouseToAdd = () => {
     });
   });
 
-  console.log(houseSelect.value);
-  console.log(contractsToCreat.value);
-
   step.value = 2;
 };
 
@@ -275,7 +323,6 @@ const isEditContracts = ref(false);
 const selectContratToEdit = ref<Contract>({});
 
 const openDialogContractsInfo = (contract: Contract) => {
-  console.log(contract);
   dialogContractsInfo.value = true;
   selectContratToEdit.value = { ...contract };
 };
@@ -423,7 +470,19 @@ const deletedContract = async (id: string | number) => {
             fixed-header
           >
             <template v-slot:item.actions="{ item }">
-              <v-icon color="error" :icon="mdiCancel" size="small" @click="invalidPayment(item.id)"></v-icon>
+              <v-icon
+                :color="item.payment_state === 'ANULADO' ? 'success' : 'error'"
+                :icon="item.payment_state === 'ANULADO' ? mdiUpdate : mdiCancel"
+                size="small"
+                @click="activatedPayment(item.id, item.payment_state === 'ANULADO' ? 'PAGADO' : 'ANULADO')"
+              ></v-icon>
+              <v-icon
+                v-if="item.payment_state !== 'ANULADO'"
+                color="success"
+                :icon="mdiDownload"
+                size="small"
+                @click="sendToDonwloadRecebit(item.id)"
+              ></v-icon>
             </template>
           </v-data-table-virtual>
         </v-col>
@@ -502,6 +561,25 @@ const deletedContract = async (id: string | number) => {
                   <v-number-input
                     :reverse="false"
                     controlVariant="default"
+                    label="Cantidad de meses a pagar"
+                    v-model="selectedPayment.amount_monthly"
+                    :hideInput="false"
+                    inset
+                  ></v-number-input>
+                </v-col>
+                <v-col cols="6">
+                  <v-select
+                    v-model="typePymentToSend"
+                    :items="['Fijo', 'A partir de este mes', 'Este mes es el último']"
+                    label="Tipo de pago mensual"
+                    variant="filled"
+                  >
+                  </v-select>
+                </v-col>
+                <v-col cols="6">
+                  <v-number-input
+                    :reverse="false"
+                    controlVariant="default"
                     label="Pago mensual"
                     v-model="selectedPayment.monthly_payment"
                     :hideInput="false"
@@ -568,6 +646,9 @@ const deletedContract = async (id: string | number) => {
                     readonly
                   ></v-number-input>
                 </v-col>
+                <v-col cols="6">
+                  <v-text-field label="Pago desde hasta." v-model="toPaymentType" readonly> </v-text-field>
+                </v-col>
                 <v-col cols="12">
                   <v-textarea
                     label="Descripción del pago"
@@ -595,7 +676,7 @@ const deletedContract = async (id: string | number) => {
                   <v-btn color="primary" @click="nexStep">Continuar</v-btn>
                 </v-col>
                 <v-col cols="3">
-                  <v-btn color="secundary" @click="sendToDonwloadRecebit"> Descargar </v-btn>
+                  <v-btn color="secundary" @click="sendToDonwloadRecebit(result.id_payment)"> Descargar </v-btn>
                 </v-col>
               </v-row>
             </v-window-item>

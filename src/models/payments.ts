@@ -7,6 +7,8 @@ export type Payment = {
   reconnection: number;
   enrollment: number;
   monthly_payment: number;
+  amount_monthly: number;
+  monthly_type_amount: "FIXED" | "UP" | "DOWN";
   payments: number;
   late_fee: number;
   other_charges: number;

@@ -1,12 +1,12 @@
 import { defineStore } from "pinia";
 import { Payment, PaymentWithDetails } from "../models/payments";
 import { getPayments, getPaymentWithDetails } from "../services/payment/get";
-import { createPayment } from "../services/payment/post";
+import { createPayment, updatePaymentStatus } from "../services/payment/post";
 
 export const usePaymetsStore = defineStore("pagos", {
   state: () => ({
     pagos: [] as Payment[],
-    pago: {} as PaymentWithDetails,
+    pago: null as PaymentWithDetails | null,
     pageLength: 5,
     cargando: false,
     result: { success: false, message: "", id_payment: "" },
@@ -52,8 +52,9 @@ export const usePaymetsStore = defineStore("pagos", {
         this.cargando = false;
       }
     },
-    async fetchPaymentWithDetails(paymentId: string): Promise<PaymentWithDetails | null> {
+    async fetchPaymentWithDetails(paymentId: string): Promise<boolean> {
       this.cargando = true;
+      this.pago = null;
       try {
         const paymentDetails = await getPaymentWithDetails(paymentId);
         if (paymentDetails) {
@@ -63,7 +64,7 @@ export const usePaymetsStore = defineStore("pagos", {
             message: "Detalles del pago cargados exitosamente",
             id_payment: paymentDetails.payment.id,
           };
-          return paymentDetails;
+          return true;
         } else {
           this.pago = {} as PaymentWithDetails; // Aseguramos que sea un objeto vacío si no se encuentra el pago
           this.result = {
@@ -81,18 +82,38 @@ export const usePaymetsStore = defineStore("pagos", {
           message: error instanceof Error ? error.message : "Error desconocido",
           id_payment: "",
         };
-        return null;
+        return false;
+      } finally {
+        this.cargando = false;
+      }
+    },
+    async updatePaymentStatus(
+      paymentId: string,
+      status: "PAGADO" | "PENDIENTE" | "ANULADO"
+    ): Promise<{ success: boolean; message: string }> {
+      this.cargando = true;
+      try {
+        const result = await updatePaymentStatus(paymentId, status);
+        this.result = {
+          success: result.success,
+          message: result.message,
+          id_payment: paymentId,
+        };
+        return result;
+      } catch (error) {
+        console.error("Error al actualizar el estado del pago:", error);
+        this.result = {
+          success: false,
+          message: error instanceof Error ? error.message : "Error desconocido",
+          id_payment: paymentId,
+        };
+        return {
+          success: false,
+          message: error instanceof Error ? error.message : "Error desconocido",
+        };
       } finally {
         this.cargando = false;
       }
     },
   },
 });
-
-/* 
-export async function getPaymentWithDetails(paymentId: string): Promise<{
-  payment: Payment;
-  house: { id: string; direction: string };
-  client: { name: string; lastname: string; document: string };
-} | null>
-*/

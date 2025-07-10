@@ -3,6 +3,7 @@
 import html2canvas from "html2canvas";
 import { onMounted, ref } from "vue";
 import { PaymentWithDetails } from "../models/payments";
+import { formatPrice } from "../utilities/format";
 
 /* RECIBIR LOS DATOS DEL RECIBO */
 const payment_info = defineModel({
@@ -13,10 +14,6 @@ const payment_info = defineModel({
 onMounted(() => {
   console.log(payment_info.value);
 });
-// --- Estado para la personalización de la imagen ---
-const mainText = ref("Hola, Vue y Tauri!");
-const bgColor = ref("#1E88E5"); // Un azul primario de Vuetify
-const textColor = ref("#FFFFFF");
 
 // --- Estado para el resultado ---
 const generatedImageSrc = ref<string | null>(null);
@@ -51,6 +48,103 @@ const generateImage = async () => {
     isLoading.value = false;
   }
 };
+
+const printGeneratedImage = async () => {
+  if (!imageSourceRef.value) return;
+
+  isLoading.value = true;
+  try {
+    // 1. Genera el canvas con alta resolución
+    const canvas = await html2canvas(imageSourceRef.value, {
+      scale: 3, // Aumenta la escala para una calidad de impresión nítida
+      useCORS: true,
+      backgroundColor: null, // Usa el fondo del elemento
+    });
+
+    // 2. Convierte el canvas a una imagen PNG
+    const imageSrc = canvas.toDataURL("image/png");
+
+    // 3. Crea el contenido HTML para la ventana de impresión
+    const printContent = `
+      <html>
+        <head>
+          <title>Imprimir Recibo</title>
+          <style>
+            @page {
+              size: letter landscape;
+              margin: 0;
+            }
+            body {
+              margin: 0;
+              padding: 0;
+            }
+            img {
+              width: 100%;
+              height: 100%;
+              object-fit: contain;
+            }
+          </style>
+        </head>
+        <body>
+          <img src="${imageSrc}" />
+        </body>
+      </html>
+    `;
+
+    // 4. Abre una nueva ventana y escribe el contenido
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.focus();
+      // Espera a que la imagen se cargue antes de imprimir
+      printWindow.onload = () => {
+        printWindow.print();
+        // Opcional: cierra la ventana después de imprimir
+        // printWindow.close();
+      };
+    }
+  } catch (error) {
+    console.error("Error al generar o imprimir la imagen:", error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const getChargePayment: string = () => {
+  const paymentType = payment_info.value.payment.monthly_type_amount;
+  const datePayment = new Date(payment_info.value.payment.date);
+  const dateEnd = datePayment;
+  const monthlyPayment = datePayment
+    .toLocaleString("es-ES", {
+      month: "long",
+    })
+    .toUpperCase();
+
+  if (paymentType === "FIXED") return `${monthlyPayment} del ${datePayment.getFullYear()}`;
+
+  if (paymentType === "UP") {
+    dateEnd.setMonth(dateEnd.getMonth() + payment_info.value.payment.amount_monthly - 1);
+    const monthlyEnd = dateEnd
+      .toLocaleString("es-ES", {
+        month: "long",
+      })
+      .toUpperCase();
+    return `DESDE ${monthlyPayment} del ${datePayment.getFullYear()} HASTA ${monthlyEnd} del ${dateEnd.getFullYear()}`;
+  }
+
+  if (paymentType === "DOWN") {
+    dateEnd.setMonth(dateEnd.getMonth() - payment_info.value.payment.amount_monthly + 1);
+    const monthlyEnd = dateEnd
+      .toLocaleString("es-ES", {
+        month: "long",
+      })
+      .toUpperCase();
+    return `DESDE ${monthlyEnd} del ${dateEnd.getFullYear()} HASTA ${monthlyPayment} del ${datePayment.getFullYear()}`;
+  }
+
+  return "No se pudo retornar el mes.";
+};
 </script>
 
 <template>
@@ -58,27 +152,7 @@ const generateImage = async () => {
     <v-row>
       <!-- Columna de Controles -->
       <v-col cols="12">
-        <v-card>
-          <v-card-title>Personalizar Imagen</v-card-title>
-          <v-card-text>
-            <v-text-field
-              v-model="mainText"
-              label="Texto Principal"
-              variant="outlined"
-              density="compact"
-            ></v-text-field>
-            <v-text-field v-model="bgColor" label="Color de Fondo" variant="outlined" density="compact"></v-text-field>
-            <v-text-field
-              v-model="textColor"
-              label="Color del Texto"
-              variant="outlined"
-              density="compact"
-            ></v-text-field>
-          </v-card-text>
-          <v-card-actions>
-            <v-btn @click="generateImage" :loading="isLoading" color="primary" block> Generar Imagen </v-btn>
-          </v-card-actions>
-        </v-card>
+        <v-btn @click="generateImage" :loading="isLoading" color="warning" text="Generar Imagen"> </v-btn>
       </v-col>
 
       <!-- Columna de Previsualización -->
@@ -91,92 +165,12 @@ const generateImage = async () => {
               <div class="content">
                 <section class="content-header">
                   <div>
-                    <!-- <p>ACUEDUCTO COMUNITARIO CARIBAYONA</p>
+                    <p>ACUEDUCTO COMUNITARIO CARIBAYONA</p>
                     <p>NOMBRE: {{ payment_info.client.name }} {{ payment_info.client.lastname }}</p>
-                    <P>FACTURA: {{ payment_info.payment.id }}</P>
-                    <p>CASA No: {{ payment_info.house.id }} - {{ payment_info.house.direction }}</p>
-                    <p>FECHA: {{ payment_info.payment.date }}</p>
-                    <P>{{ payment_info.payment.description }}</P> -->
-                    <p>ACUEDUCTO COMUNITARIO CARIBAYONA</p>
-                    <p>NOMBRE: ""</p>
-                    <P>FACTURA: ""</P>
-                    <p>CASA No: ""</p>
-                    <p>FECHA: ""</p>
-                    <P>""</P>
-                    <P>ULTIMO DIA DE PAGO 30 DE JUNIO</P>
-                  </div>
-                  <div>
-                    <img src="../../public/i-site-logo.svg" alt="" />
-                  </div>
-                </section>
-                <section class="content-body">
-                  <table>
-                    <caption>
-                      DESCRIPCIÓN DE COBRO
-                    </caption>
-                    <tbody>
-                      <tr>
-                        <td>COBRO DE AGUA DESDE DIC 2025 HASTA MAYO 2025</td>
-                        <td>6 MESES</td>
-                      </tr>
-                      <tr>
-                        <td>MATRICULA</td>
-                        <td>asd</td>
-                      </tr>
-                      <tr>
-                        <td>MENSUALIDAD</td>
-                        <td>asd</td>
-                      </tr>
-                      <tr>
-                        <td>SALDO ANTERIOR</td>
-                        <td>asd</td>
-                      </tr>
-                      <tr>
-                        <td>RECONEXIÓN</td>
-                        <td>asd</td>
-                      </tr>
-                      <tr>
-                        <td>ABONOS</td>
-                        <td>asd</td>
-                      </tr>
-                      <tr>
-                        <td>CARGO POR PAGO ATRASADO</td>
-                        <td>asd</td>
-                      </tr>
-                      <tr>
-                        <td>Otros cargos</td>
-                        <td>asd</td>
-                      </tr>
-                      <tr>
-                        <td>TOTAL</td>
-                        <td>asd</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </section>
-                <section class="content-footer">
-                  <div>
-                    <div>
-                      <p>
-                        RECUERDE SEÑOR USUARIO QUE SE COBRA MES VENCIDO ATENCION AL CLIETE: 322 337 7889 - 313 324 1224
-                      </p>
-                    </div>
-                    <div>
-                      <img src="../../public/Daco.png" alt="img Daco" width="300px" />
-                    </div>
-                  </div>
-                </section>
-              </div>
-              <div class="content">
-                <section class="content-header">
-                  <div>
-                    <p>ACUEDUCTO COMUNITARIO CARIBAYONA</p>
-                    <p>NOMBRE: ""</p>
-                    <P>FACTURA: ""</P>
-                    <p>CASA No: ""</p>
-                    <p>FECHA: ""</p>
-                    <P>""</P>
-                    <P>ULTIMO DIA DE PAGO 30 DE JUNIO</P>
+                    <p>FACTURA: {{ payment_info.payment.id }}</p>
+                    <p>CASA No: {{ payment_info.house.id }} - {{ payment_info.house.id }}</p>
+                    <p>FECHA: {{ new Date(payment_info.payment.date).toLocaleDateString() }}</p>
+                    <p>{{ payment_info.payment.description }}</p>
                   </div>
                   <div>
                     <img src="/i-site-logo.svg" alt="" />
@@ -189,40 +183,45 @@ const generateImage = async () => {
                     </caption>
                     <tbody>
                       <tr>
-                        <td>COBRO DE AGUA DESDE DIC 2025 HASTA MAYO 2025</td>
-                        <td>6 MESES</td>
+                        <td>COBRO DE AGUA {{ getChargePayment() }}</td>
+                        <td>
+                          {{ payment_info.payment.amount_monthly }}
+                          {{ payment_info.payment.amount_monthly > 1 ? "Meses" : "Mes" }}
+                        </td>
                       </tr>
                       <tr>
                         <td>MATRICULA</td>
-                        <td>asd</td>
+                        <td>{{ formatPrice(payment_info.payment.enrollment) }}</td>
                       </tr>
                       <tr>
                         <td>MENSUALIDAD</td>
-                        <td>asd</td>
-                      </tr>
-                      <tr>
-                        <td>SALDO ANTERIOR</td>
-                        <td>asd</td>
+                        <td>{{ formatPrice(payment_info.payment.monthly_payment) }}</td>
                       </tr>
                       <tr>
                         <td>RECONEXIÓN</td>
-                        <td>asd</td>
+                        <td>{{ formatPrice(payment_info.payment.reconnection) }}</td>
                       </tr>
                       <tr>
                         <td>ABONOS</td>
-                        <td>asd</td>
+                        <td>{{ formatPrice(payment_info.payment.payments) }}</td>
                       </tr>
                       <tr>
                         <td>CARGO POR PAGO ATRASADO</td>
-                        <td>asd</td>
+                        <td>{{ formatPrice(payment_info.payment.late_fee) }}</td>
                       </tr>
                       <tr>
                         <td>Otros cargos</td>
-                        <td>asd</td>
+                        <td>{{ formatPrice(payment_info.payment.other_charges) }}</td>
+                      </tr>
+                      <tr>
+                        <td>Sub Total</td>
+                        <td>
+                          {{ formatPrice(payment_info.payment.amount_monthly * payment_info.payment.monthly_payment) }}
+                        </td>
                       </tr>
                       <tr>
                         <td>TOTAL</td>
-                        <td>asd</td>
+                        <td>{{ formatPrice(payment_info.payment.value_total) }}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -230,12 +229,91 @@ const generateImage = async () => {
                 <section class="content-footer">
                   <div>
                     <div>
-                      <p>
-                        RECUERDE SEÑOR USUARIO QUE SE COBRA MES VENCIDO ATENCION AL CLIETE: 322 337 7889 - 313 324 1224
-                      </p>
+                      <img src="/Daco.png" alt="img Daco" width="300px" />
                     </div>
                     <div>
+                      <p>RECUERDE SEÑOR USUARIO QUE SE COBRA MES VENCIDO ATENCION AL CLIENTE 3133241224-322337788</p>
+                      <p>¡NO LA RIEGUES, CUIDA EL AGUA!</p>
+                    </div>
+                  </div>
+                </section>
+              </div>
+              <div class="content">
+                <section class="content-header">
+                  <div>
+                    <p>ACUEDUCTO COMUNITARIO CARIBAYONA</p>
+                    <p>NOMBRE: {{ payment_info.client.name }} {{ payment_info.client.lastname }}</p>
+                    <p>FACTURA: {{ payment_info.payment.id }}</p>
+                    <p>CASA No: {{ payment_info.house.id }} - {{ payment_info.house.id }}</p>
+                    <p>FECHA: {{ new Date(payment_info.payment.date).toLocaleDateString() }}</p>
+                    <p>{{ payment_info.payment.description }}</p>
+                  </div>
+                  <div>
+                    <img src="/i-site-logo.svg" alt="" />
+                  </div>
+                </section>
+                <section class="content-body">
+                  <table>
+                    <caption>
+                      DESCRIPCIÓN DE COBRO
+                    </caption>
+                    <tbody>
+                      <tr>
+                        <td>COBRO DE AGUA {{ getChargePayment() }}</td>
+                        <td>
+                          {{ payment_info.payment.amount_monthly }}
+                          {{ payment_info.payment.amount_monthly > 1 ? "Meses" : "Mes" }}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>MATRICULA</td>
+                        <td>{{ formatPrice(payment_info.payment.enrollment) }}</td>
+                      </tr>
+                      <tr>
+                        <td>MENSUALIDAD</td>
+                        <td>{{ formatPrice(payment_info.payment.monthly_payment) }}</td>
+                      </tr>
+                      <tr>
+                        <td>SALDO ANTERIOR</td>
+                        <td>{{ formatPrice(payment_info.payment.remaining_debt) }}</td>
+                      </tr>
+                      <tr>
+                        <td>RECONEXIÓN</td>
+                        <td>{{ formatPrice(payment_info.payment.reconnection) }}</td>
+                      </tr>
+                      <tr>
+                        <td>ABONOS</td>
+                        <td>{{ formatPrice(payment_info.payment.payments) }}</td>
+                      </tr>
+                      <tr>
+                        <td>CARGO POR PAGO ATRASADO</td>
+                        <td>{{ formatPrice(payment_info.payment.late_fee) }}</td>
+                      </tr>
+                      <tr>
+                        <td>Otros cargos</td>
+                        <td>{{ formatPrice(payment_info.payment.other_charges) }}</td>
+                      </tr>
+                      <tr>
+                        <td>Sub Total</td>
+                        <td>
+                          {{ formatPrice(payment_info.payment.amount_monthly * payment_info.payment.monthly_payment) }}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>TOTAL</td>
+                        <td>{{ formatPrice(payment_info.payment.value_total) }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </section>
+                <section class="content-footer">
+                  <div>
+                    <div>
                       <img src="/Daco.png" alt="img Daco" width="300px" />
+                    </div>
+                    <div>
+                      <p>RECUERDE SEÑOR USUARIO QUE SE COBRA MES VENCIDO ATENCION AL CLIENTE 3133241224-322337788</p>
+                      <p>¡NO LA RIEGUES, CUIDA EL AGUA!</p>
                     </div>
                   </div>
                 </section>
@@ -247,14 +325,26 @@ const generateImage = async () => {
         <!-- Muestra la imagen generada y el botón de descarga -->
         <v-card v-if="generatedImageSrc" class="mt-4">
           <v-card-title>Resultado</v-card-title>
-          <v-card-text class="text-center">
-            <img :src="generatedImageSrc" alt="Imagen Generada" class="generated-image" />
+          <v-card-text>
+            <img :src="generatedImageSrc" alt="Imagen Generada" class="generated-image printable-area" />
           </v-card-text>
           <v-card-actions>
             <!-- El truco para descargar es un <a> con el atributo 'download' -->
-            <v-btn :href="generatedImageSrc" download="mi-imagen-generada.png" color="success">
-              Descargar Imagen
+            <v-btn
+              :href="generatedImageSrc"
+              :download="`recibo-${payment_info.payment.id}.png`"
+              color="success"
+              variant="elevated"
+              text="Descargar Imagen"
+            >
             </v-btn>
+            <v-btn
+              @click="printGeneratedImage"
+              :loading="isLoading"
+              color="primary"
+              text="Imprimir Recibo"
+              variant="flat"
+            ></v-btn>
           </v-card-actions>
         </v-card>
       </v-col>
@@ -265,15 +355,21 @@ const generateImage = async () => {
 <style scoped>
 .live-preview {
   display: flex;
+  flex-direction: row;
   align-items: space-between;
-  font-family: Arial, sans-serif;
+
+  color: #1e88e5;
+  background-color: #f5f5f5;
+
+  padding: 20px;
   margin: 0;
   gap: 20px;
+
+  font-family: Arial, sans-serif;
   font-weight: bold;
-  color: #1e88e5;
-  width: 100%;
-  background-color: #f5f5f5;
-  padding: 20px;
+
+  width: fit-content;
+  height: 750px;
 
   & > .content {
     border: 2px solid #ccc;
@@ -316,26 +412,73 @@ const generateImage = async () => {
 
 .content-footer {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: center;
+
   padding: 10px;
   border-top: 2px solid #ccc;
 
-  div {
+  & > div {
+    width: 600px;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: space-evenly;
     align-items: center;
 
-    p {
+    & > div:last-child {
+      width: 100%;
+      padding: 20px;
+    }
+
+    & > div:first-child {
+      max-width: 300px;
       margin: 0;
       font-size: 0.9em;
+
+      & > img {
+        max-width: 100px;
+        height: auto;
+      }
     }
   }
 }
 
 .generated-image {
-  max-width: 100%;
+  width: fit-content;
+  height: 750px;
+
   border: 1px solid #ccc;
   border-radius: 4px;
+}
+</style>
+
+<style>
+/* Estas reglas SOLO se aplican cuando el usuario presiona Ctrl+P o imprime */
+@media print {
+  /* Le dice al navegador que la página debe ser horizontal */
+  @page {
+    size: landscape;
+  }
+
+  /* Oculta todo en la página EXCEPTO el área que queremos imprimir */
+  body > * {
+    display: none !important;
+  }
+
+  /* Muestra solo el contenedor del recibo y sus padres */
+  .printable-area {
+    display: block !important;
+  }
+
+  /* Asegúrate de que el área de impresión ocupe todo el espacio */
+  .printable-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none !important; /* Quita bordes y sombras al imprimir */
+    box-shadow: none !important;
+  }
 }
 </style>
