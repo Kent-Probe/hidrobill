@@ -114,10 +114,65 @@ export const updateUserState = async (userId: number, state: string): Promise<Se
 export const getAllUsersExceptAdmin = async (): Promise<UserDB[]> => {
   try {
     const db = await Database.load("sqlite:hidrobill.db");
-    const users = await db.select("SELECT name, username, state FROM USER WHERE id != 1");
+    const users = await db.select("SELECT id, name, username, state FROM USER WHERE id != 1");
     return users as UserDB[];
   } catch (error) {
     console.error("Error al obtener los usuarios:", error);
     throw new Error("No se pudieron obtener los usuarios");
+  }
+};
+
+/**
+ * Actualiza el nombre y nombre de usuario de un usuario existente.
+ * @param userId - El ID del usuario a actualizar.
+ * @param name - El nuevo nombre completo del usuario.
+ * @param username - El nuevo nombre de usuario.
+ * @returns Un objeto ServiceResult indicando si la operación fue exitosa.
+ */
+export const updateUserInfo = async (userId: number, name: string, username: string): Promise<ServiceResult> => {
+  try {
+    const db = await Database.load("sqlite:hidrobill.db");
+    const result = await db.execute("UPDATE USER SET name = $1, username = $2 WHERE id = $3", [name, username, userId]);
+
+    if (result.rowsAffected === 0) {
+      return { success: false, message: "No se encontró un usuario con el ID proporcionado." };
+    }
+
+    return { success: true, message: "Información del usuario actualizada correctamente." };
+  } catch (error: any) {
+    console.error("Error al actualizar la información del usuario:", error);
+
+    if (error?.toString().includes("UNIQUE constraint failed: users.username")) {
+      return { success: false, message: "El nombre de usuario ya está en uso." };
+    }
+
+    return { success: false, message: "Ocurrió un error al intentar actualizar la información." };
+  }
+};
+
+/**
+ * Actualiza la contraseña de un usuario existente.
+ * @param userId - El ID del usuario a actualizar.
+ * @param newPassword - La nueva contraseña sin cifrar.
+ * @returns Un objeto ServiceResult indicando si la operación fue exitosa.
+ */
+export const updateUserPassword = async (userId: number, newPassword: string): Promise<ServiceResult> => {
+  try {
+    // Cifrar la nueva contraseña
+    const passwordHash: string = await invoke("hash_password", {
+      password: newPassword,
+    });
+
+    const db = await Database.load("sqlite:hidrobill.db");
+    const result = await db.execute("UPDATE USER SET password = $1 WHERE id = $2", [passwordHash, userId]);
+
+    if (result.rowsAffected === 0) {
+      return { success: false, message: "No se encontró un usuario con el ID proporcionado." };
+    }
+
+    return { success: true, message: "Contraseña actualizada correctamente." };
+  } catch (error) {
+    console.error("Error al actualizar la contraseña del usuario:", error);
+    return { success: false, message: "Ocurrió un error al intentar actualizar la contraseña." };
   }
 };

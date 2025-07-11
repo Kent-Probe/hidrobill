@@ -8,6 +8,7 @@ export type UserDB = {
   name: string;
   username: string;
   state: string;
+  id: string;
 };
 
 export type RegisterDataUser = {

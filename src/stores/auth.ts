@@ -1,10 +1,18 @@
 import { defineStore } from "pinia";
-import { RegisterDataUser, User } from "../models/user";
+import { RegisterDataUser, User, UserDB } from "../models/user";
 import { cookieStorage } from "../plugins/cookieAdapter";
-import { login, register, updateUserState } from "../services/auth/auth";
+import {
+  getAllUsersExceptAdmin,
+  login,
+  register,
+  updateUserInfo,
+  updateUserPassword,
+  updateUserState,
+} from "../services/auth/auth";
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
+    users: [] as UserDB[],
     user: {
       name: "",
       username: "",
@@ -98,7 +106,7 @@ export const useAuthStore = defineStore("auth", {
         this.loading = false;
       }
     },
-    async updateUser(id: string, state: string): Promise<void> {
+    async updateUserState(id: string, state: string): Promise<void> {
       this.loading = true;
       try {
         const result = await updateUserState(id, state);
@@ -110,6 +118,62 @@ export const useAuthStore = defineStore("auth", {
         this.result = {
           success: false,
           message: error instanceof Error ? error.message : "Error desconocido",
+        };
+      } finally {
+        this.loading = false;
+      }
+    },
+    async fetchGetUsers(): Promise<void> {
+      this.loading = true;
+      try {
+        this.users = await getAllUsersExceptAdmin();
+        this.result = {
+          success: true,
+          message: "Usuarios cargados exitosamente",
+        };
+      } catch (error) {
+        this.isError = true;
+        this.error.message = error instanceof Error ? error : "Error desconocido";
+        this.result = {
+          message: this.error.message,
+          success: false,
+        };
+      } finally {
+        this.loading = false;
+      }
+    },
+    async updateUserInfo(userId: string, name: string, username: string): Promise<void> {
+      this.loading = true;
+      try {
+        const result = await updateUserInfo(userId, name, username);
+        this.result = {
+          success: result.success,
+          message: result.message,
+        };
+      } catch (error) {
+        this.result = {
+          success: false,
+          message: error instanceof Error ? error : "Error desconocido",
+        };
+      } finally {
+        this.loading = false;
+      }
+    },
+    async updateUserPassword(userId: string, password: string): Promise<void> {
+      this.loading = true;
+      try {
+        if (this.user.name.toLowerCase() !== "admin" || this.user.username.toLowerCase() !== "admin") {
+          throw new Error("Solo el usuario admin puede cambiar la contraseña de otro usuario.");
+        }
+        const result = await updateUserPassword(userId, password);
+        this.result = {
+          success: result.success,
+          message: result.message,
+        };
+      } catch (error) {
+        this.result = {
+          success: false,
+          message: error instanceof Error ? error : "Error desconocido",
         };
       } finally {
         this.loading = false;
