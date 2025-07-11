@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
-import { User } from "../models/user";
+import { RegisterDataUser, User } from "../models/user";
 import { cookieStorage } from "../plugins/cookieAdapter";
-import { login } from "../services/auth/auth";
+import { login, register, updateUserState } from "../services/auth/auth";
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
@@ -15,6 +15,10 @@ export const useAuthStore = defineStore("auth", {
       message: "",
     },
     loading: false,
+    result: {
+      success: false,
+      message: "",
+    },
   }),
   actions: {
     async login(username: string, password: string): Promise<User> {
@@ -70,6 +74,46 @@ export const useAuthStore = defineStore("auth", {
       this.user = { name: "", username: "" };
       this.isError = false;
       this.error.message = "";
+    },
+    async registerUser(registerUser: RegisterDataUser): Promise<void> {
+      this.loading = true;
+      try {
+        const dataToSend = {
+          names: registerUser.names,
+          lastnames: registerUser.lastnames,
+          username: registerUser.username,
+          password: registerUser.password,
+        };
+        const result = await register(dataToSend);
+        this.result = {
+          success: result.success,
+          message: result.message,
+        };
+      } catch (error) {
+        this.result = {
+          success: false,
+          message: error instanceof Error ? error : "Error desconocido",
+        };
+      } finally {
+        this.loading = false;
+      }
+    },
+    async updateUser(id: string, state: string): Promise<void> {
+      this.loading = true;
+      try {
+        const result = await updateUserState(id, state);
+        this.result = {
+          success: result.success,
+          message: result.message,
+        };
+      } catch (error) {
+        this.result = {
+          success: false,
+          message: error instanceof Error ? error.message : "Error desconocido",
+        };
+      } finally {
+        this.loading = false;
+      }
     },
   },
   getters: {

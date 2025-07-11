@@ -36,7 +36,7 @@ pub fn verify_password_and_create_token(password: &str, hash: &str, username: &s
         exp: expiration as usize,
     };
     
-    let secret = "KENT_TEMP_KEY"; //TODO: Reemplaza con tu clave secreta real
+    let secret = "KENT_TEMP_KEY"; //TODO: Reemplaza con clave secreta real
 
     let token = encode(&Header::default(), &claims, &EncodingKey::from_secret(secret.as_ref()))
         .map_err(|e| e.to_string())?;

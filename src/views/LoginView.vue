@@ -11,7 +11,6 @@ const { user, loading, isError, error } = storeToRefs(authStore);
 const { login, autoLogin } = authStore;
 
 onMounted(() => {
-  console.log(autoLogin());
   if (autoLogin()) {
     router.push({ name: "Clients" });
   }
