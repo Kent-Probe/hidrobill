@@ -1,25 +1,44 @@
 <script setup>
 import { mdiContentSave, mdiDirections, mdiHomeAlert, mdiHomeGroup, mdiIdentifier, mdiImageText } from "@mdi/js";
-import { ref, watch } from "vue";
+import { storeToRefs } from "pinia";
+import { ref } from "vue";
 import TableHouse from "../components/TableHouse.vue";
 import { paletteColors } from "../services/colors/paletteColors";
+import { useHousesStore } from "../stores/house";
+
+const houseStore = useHousesStore();
+const { cargando, result } = storeToRefs(houseStore);
+const { updateHouse } = houseStore;
+const open = ref(false);
 
 const houseSelect = ref({
   id: "",
   direction: "",
   colorChip: "",
-  barrio: "",
+  neighborhood: "",
   description: "",
 });
 
-watch(houseSelect, (newValue) => {
-  console.log("Selected house:", newValue);
-});
-
+async function saveChanges() {
+  await updateHouse(houseSelect.value);
+  open.value = true;
+}
 </script>
 
 <template>
   <v-row no-gutter>
+    <v-alert
+      v-model="open"
+      style="bottom: 20px; right: 20px"
+      closable
+      :title="result.success ? 'Éxito' : 'Error'"
+      :text="result.message"
+      :type="result.success ? 'success' : 'error'"
+      width="500"
+      position="absolute"
+      location="bottom right"
+    ></v-alert>
+
     <v-col cols="12" class="pa-4">
       <TableHouse v-model="houseSelect" />
     </v-col>
@@ -53,7 +72,11 @@ watch(houseSelect, (newValue) => {
             ></v-text-field>
           </v-col>
           <v-col cols="4">
-            <v-text-field v-model="houseSelect.barrio" label="Barrio" :prepend-inner-icon="mdiHomeGroup"></v-text-field>
+            <v-text-field
+              v-model="houseSelect.neighborhood"
+              label="Barrio"
+              :prepend-inner-icon="mdiHomeGroup"
+            ></v-text-field>
           </v-col>
           <v-col cols="4">
             <v-select label="Color del chip" v-model="houseSelect.colorChip" :items="paletteColors">
@@ -71,8 +94,15 @@ watch(houseSelect, (newValue) => {
             </v-select>
           </v-col>
           <v-col cols="12" class="text-right">
-            <v-btn color="success" :prepend-icon="mdiContentSave" variant="elevated" size="large">
-              Guardar cambios
+            <v-btn
+              color="success"
+              :prepend-icon="mdiContentSave"
+              variant="elevated"
+              size="large"
+              text="Guardar cambios"
+              :loading="cargando"
+              @click="saveChanges"
+            >
             </v-btn>
           </v-col>
         </v-row>

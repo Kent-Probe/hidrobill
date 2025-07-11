@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { mdiAccountMultiple, mdiHomeEdit, mdiMagnify, mdiPlus } from "@mdi/js";
+import { mdiAccountMultiple, mdiHomeEdit, mdiMagnify } from "@mdi/js";
 import { storeToRefs } from "pinia";
-import { ref, watch } from "vue";
+import { ref } from "vue";
 import { House } from "../models/houses";
 import { useHousesStore } from "../stores/house";
 
@@ -37,12 +37,8 @@ const headers = ref([
 ]);
 
 const page = ref(1);
-const direction = ref("");
 const search = ref("");
-
-watch(direction, () => {
-  search.value = String(Date.now());
-});
+const direction = ref("");
 
 function SelectItem(item: House) {
   if (item) {
@@ -56,11 +52,9 @@ function reset() {
   houseSelect.value = { ...DEFAULT_HOUSE };
 }
 
-function loadItems(options: any) {
-  console.log(options);
-  // fetchHouses({ page, itemsPerPage, sortBy, sortDesc });
+async function loadItems(options: any) {
   reset();
-  fetchHouses();
+  await fetchHouses(5, page.value, search.value);
 }
 </script>
 
@@ -70,13 +64,13 @@ function loadItems(options: any) {
     :headers="headers"
     :items="houses"
     :loading="cargando"
-    :items-per-page="5"
     :search="search"
     no-data-text="No hay casas registradas"
-    items-length="5"
     loading-text="Cargando clientes..."
+    items-per-page="5"
     item-value="id"
     fixed-header
+    items-length="100"
     hover
     @update:options="loadItems"
   >
@@ -87,14 +81,14 @@ function loadItems(options: any) {
           Casas registrados
         </v-toolbar-title>
 
-        <v-btn
+        <!-- <v-btn
           class="me-2"
           :prepend-icon="mdiPlus"
           rounded="lg"
           text="Agregar una nueva casa"
           border
           variant="text"
-        ></v-btn>
+        ></v-btn> -->
       </v-toolbar>
     </template>
     <template v-slot:item.actions="{ item }">
@@ -118,7 +112,7 @@ function loadItems(options: any) {
           <v-row no-gutters dense>
             <v-col cols="3">
               <v-text-field
-                v-model="direction"
+                v-model="search"
                 class="ma-2"
                 density="compact"
                 placeholder="Buscar por dirección"

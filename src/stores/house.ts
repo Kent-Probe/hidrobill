@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { House } from "../models/houses";
 import { getHouses, searchHouses } from "../services/house/get";
+import { updateHouse } from "../services/house/post";
 
 export const useHousesStore = defineStore("houses", {
   state: () => ({
@@ -8,20 +9,24 @@ export const useHousesStore = defineStore("houses", {
     cargando: false,
     pageLength: 5,
     housesLimities: [] as House[], // Para almacenar las casas limitadas
+    result: {
+      success: false,
+      message: "",
+    },
   }),
   actions: {
-    async fetchHouses(limit: number = 5, page: number = 1): Promise<void> {
+    async fetchHouses(limit: number = 5, page: number = 1, search: string = ""): Promise<void> {
       this.cargando = true;
       try {
-        this.houses = await getHouses(limit, page);
+        this.houses = await getHouses(limit, page, search);
         if (this.houses.length < limit) {
-          this.pageLength = page; // Si hay menos casas de las esperadas, no hay más páginas
+          this.pageLength = page;
         } else {
-          this.pageLength = page + 1; // Si hay suficientes casas, incrementamos la página
+          this.pageLength = page + 1;
         }
       } catch (error) {
         console.error("Error al cargar las casas:", error);
-        this.houses = []; // En caso de error, asegúrate de que sea un array vacío
+        this.houses = [];
       } finally {
         this.cargando = false;
       }
@@ -36,7 +41,28 @@ export const useHousesStore = defineStore("houses", {
         }
       } catch (error) {
         console.error("Error al buscar casas:", error);
-        this.housesLimities = []; // En caso de error, asegúrate de que sea un array vacío
+        this.housesLimities = [];
+      } finally {
+        this.cargando = false;
+      }
+    },
+    async updateHouse(house: House): Promise<{ success: boolean; message: string }> {
+      this.cargando = true;
+      try {
+        const { id, ...cleanHouse } = house;
+        const result = await updateHouse(id, cleanHouse);
+        this.result = {
+          success: result.success,
+          message: result.message,
+        };
+        return { success: result.success, message: result.message };
+      } catch (error) {
+        const result = {
+          success: false,
+          message: error instanceof Error ? error.message : "Error desconocido",
+        };
+        this.result = result;
+        return result;
       } finally {
         this.cargando = false;
       }
