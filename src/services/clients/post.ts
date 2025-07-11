@@ -34,6 +34,7 @@ export async function createClientWithContracts(
     const db = await Database.load("sqlite:hidrobill.db");
 
     // Insert client
+    console.log(clientWithInfo);
     const clientResult = await db
       .execute(
         `INSERT INTO client (document, names, lastnames, state, gender, phone) 
@@ -44,7 +45,7 @@ export async function createClientWithContracts(
           clientWithInfo.lastname,
           clientWithInfo.state,
           clientWithInfo.gender,
-          clientWithInfo.phone | "",
+          clientWithInfo.phone || "",
         ]
       )
       .catch((error) => {

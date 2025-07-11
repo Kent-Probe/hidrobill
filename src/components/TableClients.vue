@@ -151,7 +151,7 @@ async function nexStep() {
         payday_due: 4,
         description: "",
         state: "Activo",
-        monthlyPayment: 0,
+        monthlyPayment: 15000,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         house: {
@@ -173,8 +173,6 @@ async function nexStep() {
       record.value.contracts[index].house.neighborhood = house.neighborhood;
       record.value.contracts[index].house.description = house.description;
     }
-  }
-  if (step.value === 2) {
     await save();
   }
   step.value++;
@@ -276,13 +274,13 @@ async function loadItems(options: any) {
               v-else
               v-for="(contract, index) in item.contracts"
               :key="index"
-              :text="contract.id"
+              :text="contract.id_house"
               :color="`${contract.house.colorChip}-lighten-3`"
               size="small"
               variant="flat"
               :class="index > 0 && 'ml-1'"
             >
-              {{ contract.id }}
+              {{ contract.id_house }}
             </v-chip>
           </td>
           <td class="text-end">

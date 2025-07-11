@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { mdiAccountMultiple, mdiHomeEdit, mdiMagnify, mdiPlus } from "@mdi/js";
+import { mdiAccountMultiple, mdiHomeEdit, mdiMagnify } from "@mdi/js";
 import { storeToRefs } from "pinia";
 import { ref, watch } from "vue";
 import { usePaymetsStore } from "../stores/pagos";
 import { formatDate, formatPrice } from "../utilities/format";
 
 const storePayments = usePaymetsStore();
-const { cargando, pagos, pageLength } = storeToRefs(storePayments);
-const { fetchPayments } = storePayments;
+const { cargando, pagos, pageLength, result } = storeToRefs(storePayments);
+const { fetchPayments, updatePaymentStatus } = storePayments;
 const page = ref(1);
 
 const DEFAULT_PAYMENT: Payment = {
@@ -73,6 +73,10 @@ function SelectItem(item: Payment) {
     paymentSelect.value = { ...DEFAULT_PAYMENT };
   }
 }
+
+async function alterPStatePaymemt(id: string, newStatus: string) {
+  const result = await updatePaymentStatus(id, newStatus);
+}
 </script>
 
 <template>
@@ -94,15 +98,6 @@ function SelectItem(item: Payment) {
           <v-icon color="medium-emphasis" :icon="mdiAccountMultiple" size="x-small" start></v-icon>
           Casas registrados
         </v-toolbar-title>
-
-        <v-btn
-          class="me-2"
-          :prepend-icon="mdiPlus"
-          rounded="lg"
-          text="Agregar una nueva casa"
-          border
-          variant="text"
-        ></v-btn>
       </v-toolbar>
     </template>
     <template v-slot:item.id="{ value }">

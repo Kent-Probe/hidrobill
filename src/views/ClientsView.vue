@@ -203,7 +203,6 @@ const toPaymentType = ref("Desde este mes hasta el último mes");
 watch(
   typePymentToSend,
   (val) => {
-    console.log("00000000000001");
     const date = new Date();
     const dateEnd = new Date();
     const monthly = date.toLocaleString("default", { month: "long" });
@@ -231,7 +230,7 @@ watch(
   }
 );
 
-async function activatedPayment(id: string, newStatus: string) {
+async function alterPStatePaymemt(id: string, newStatus: string) {
   const result = await updatePaymentStatus(id, newStatus);
   if (result.success) {
     await fetchClients();
@@ -474,7 +473,7 @@ const deletedContract = async (id: string | number) => {
                 :color="item.payment_state === 'ANULADO' ? 'success' : 'error'"
                 :icon="item.payment_state === 'ANULADO' ? mdiUpdate : mdiCancel"
                 size="small"
-                @click="activatedPayment(item.id, item.payment_state === 'ANULADO' ? 'PAGADO' : 'ANULADO')"
+                @click="alterPStatePaymemt(item.id, item.payment_state === 'ANULADO' ? 'PAGADO' : 'ANULADO')"
               ></v-icon>
               <v-icon
                 v-if="item.payment_state !== 'ANULADO'"

@@ -1,6 +1,12 @@
 import { defineStore } from "pinia";
 import { getClients } from "../services/clients/get";
-import { activatedClient, createClient, deactivateClient, updateClient } from "../services/clients/post";
+import {
+  activatedClient,
+  createClient,
+  createClientWithContracts,
+  deactivateClient,
+  updateClient,
+} from "../services/clients/post";
 
 export const useClientsStore = defineStore("clients", {
   state: () => ({ clients: [] as ClientWithInfo[], pageLength: 1, cargando: false }),
@@ -42,7 +48,6 @@ export const useClientsStore = defineStore("clients", {
     ): Promise<{ success: boolean; message: string }> {
       this.cargando = true;
       try {
-        const { createClientWithContracts } = await import("../services/clients/post");
         const result = await createClientWithContracts(clientWithInfo);
         return result;
       } finally {
