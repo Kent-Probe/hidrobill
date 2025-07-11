@@ -2,6 +2,7 @@ export type Payment = {
   id: string;
   id_contract: string;
   date: string | Date;
+  date_payment: string | Date;
   value_total: number;
   remaining_debt: number;
   reconnection: number;

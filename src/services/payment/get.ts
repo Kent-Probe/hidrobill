@@ -54,6 +54,7 @@ export async function getPaymentWithDetails(paymentId: string): Promise<PaymentW
       description: row.description,
       amount_monthly: row.amount_monthly,
       monthly_type_amount: row.monthly_type_amount,
+      date_payment: row.date_payment,
     },
     house: {
       id: row.house_id,

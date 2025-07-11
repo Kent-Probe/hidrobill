@@ -11,7 +11,6 @@ const { cargando, pago } = storeToRefs(storePayments);
 const { fetchPaymentWithDetails } = storePayments;
 
 onMounted(async () => {
-  console.log("----------------------------------------------------");
   const paymentId = router.currentRoute.value.params.id as string;
 
   if (!paymentId) {
@@ -20,8 +19,6 @@ onMounted(async () => {
   }
 
   const success = await fetchPaymentWithDetails(paymentId);
-
-  console.log(success);
 
   if (!success) {
     console.error("No se pudo cargar el pago, redirigiendo.");

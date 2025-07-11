@@ -54,53 +54,53 @@ const printGeneratedImage = async () => {
 
   isLoading.value = true;
   try {
-    // 1. Genera el canvas con alta resolución
     const canvas = await html2canvas(imageSourceRef.value, {
-      scale: 3, // Aumenta la escala para una calidad de impresión nítida
+      scale: 3,
       useCORS: true,
-      backgroundColor: null, // Usa el fondo del elemento
+      backgroundColor: null,
     });
 
-    // 2. Convierte el canvas a una imagen PNG
     const imageSrc = canvas.toDataURL("image/png");
 
-    // 3. Crea el contenido HTML para la ventana de impresión
+    // --- CAMBIOS AQUÍ ---
     const printContent = `
-      <html>
-        <head>
-          <title>Imprimir Recibo</title>
-          <style>
-            @page {
-              size: letter landscape;
-              margin: 0;
-            }
-            body {
-              margin: 0;
-              padding: 0;
-            }
-            img {
-              width: 100%;
-              height: 100%;
-              object-fit: contain;
-            }
-          </style>
-        </head>
-        <body>
-          <img src="${imageSrc}" />
-        </body>
-      </html>
-    `;
-
-    // 4. Abre una nueva ventana y escribe el contenido
+    <html>
+      <head>
+        <title>Imprimir Recibo</title>
+        <style>
+          @page {
+            size: letter portrait;
+            margin: 1cm;
+          }
+          body {
+            margin: 0;
+            padding: 0;
+            /* --- CAMBIOS PARA ALINEAR ARRIBA --- */
+            display: flex;
+            justify-content: flex-start; /* Alinea horizontalmente al inicio (izquierda) */
+            align-items: flex-start;   /* Alinea verticalmente al inicio (arriba) */
+            width: 100%;
+            height: 100%;
+          }
+          img {
+            max-width: 100%;   /* Usa max-width para que no se desborde */
+            max-height: 100%;  /* Usa max-height para que no se desborde */
+            object-fit: contain;
+          }
+        </style>
+      </head>
+      <body>
+        <img src="${imageSrc}" />
+      </body>
+    </html>
+  `;
     const printWindow = window.open("", "_blank");
     if (printWindow) {
       printWindow.document.write(printContent);
       printWindow.document.close();
       printWindow.focus();
-      // Espera a que la imagen se cargue antes de imprimir
       printWindow.onload = () => {
         printWindow.print();
-        // Opcional: cierra la ventana después de imprimir
         // printWindow.close();
       };
     }
@@ -113,7 +113,7 @@ const printGeneratedImage = async () => {
 
 const getChargePayment: string = () => {
   const paymentType = payment_info.value.payment.monthly_type_amount;
-  const datePayment = new Date(payment_info.value.payment.date);
+  const datePayment = new Date(payment_info.value.payment.date_payment);
   const dateEnd = datePayment;
   const monthlyPayment = datePayment
     .toLocaleString("es-ES", {

@@ -62,7 +62,8 @@ const DEFAULT_CONTRACT: Contract = {
 };
 
 const DEFAULT_PAYMENT: Payment = {
-  date: "",
+  date: new Date().toISOString(),
+  date_payment: new Date().toISOString(),
   reconnection: 0,
   remaining_debt: 0,
   enrollment: 0,
@@ -155,11 +156,9 @@ async function nexStep() {
   if (step.value === 2) {
     const paymentToSend = {
       ...selectedPayment.value,
-      date: Date.now(),
       value_total: valueTotal.value,
       id_contract: selectedContract.value.id,
     };
-    console.log(paymentToSend);
     selectedPayment.value = paymentToSend;
     const paymentResult = await createPayment(paymentToSend);
     await fetchClients();
@@ -203,7 +202,7 @@ const toPaymentType = ref("Desde este mes hasta el último mes");
 watch(
   typePymentToSend,
   (val) => {
-    const date = new Date();
+    const date = new Date(selectedPayment.value.date_payment);
     const dateEnd = new Date();
     const monthly = date.toLocaleString("default", { month: "long" });
 
@@ -554,7 +553,17 @@ const deletedContract = async (id: string | number) => {
                     label="Fecha de vencimiento"
                     :model-value="numberToDate(selectedContract.payday_due)"
                     readonly
-                  ></v-text-field>
+                  ></v-text-field> </v-col
+                ><v-col cols="6">
+                  <v-date-input
+                    v-model="selectedPayment.date_payment"
+                    label="Fecha de pago del contrato"
+                    :format="(val) => new Date(val).toLocaleDateString()"
+                    :rules="[(v) => !!v || 'Este campo es obligatorio']"
+                    :prepend-inner-icon="mdiCalendar"
+                    prepend-icon=""
+                    persistent-hint
+                  ></v-date-input>
                 </v-col>
                 <v-col cols="6">
                   <v-number-input

@@ -13,8 +13,8 @@ export async function createPayment(
                   id_contract, date, value_total, remaining_debt, 
                   reconnection, enrollment, monthly_payment, payments, 
                   late_fee, other_charges, payment_state, description, amount_monthly,
-                    monthly_type_amount
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )`,
+                    monthly_type_amount, date_payment
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )`,
       [
         payment.id_contract,
         payment.date,
@@ -30,6 +30,7 @@ export async function createPayment(
         payment.description,
         payment.amount_monthly,
         payment.monthly_type_amount,
+        payment.date_payment,
       ]
     );
 

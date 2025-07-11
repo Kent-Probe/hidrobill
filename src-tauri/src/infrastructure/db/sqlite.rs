@@ -15,6 +15,12 @@ pub fn create_migration_db() -> Vec<Migration> {
             sql: "INSERT INTO USER (name, username, password, state) VALUES ('Admin', 'admin', '$2b$12$9t/UG.tjW4mEXyCxFF1HMO0s75quMG6MmYeSWpPkNQt.qceVAduz.', 'activo');",
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 3,
+            description: "add_date_payment_column",
+            sql: "ALTER TABLE payment ADD COLUMN date_payment DATETIME; UPDATE payment SET date_payment = date WHERE date_payment IS NULL;",
+            kind: MigrationKind::Up,
+        }
     ];
     migrations
 }
