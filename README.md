@@ -1,16 +1,116 @@
-# Tauri + Vue + TypeScript
+# HIDROBILL + KENT
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+<div align="center">
+  <img src="src/assets/logo.svg" alt="HidroBill Logo" width="200" height="200"/>
+  
+  # HidroBill
+  
+  **Sistema de Gestión para Acueductos Comunitarios**
+  
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  [![GitHub release](https://img.shields.io/github/v/release/Kent-Probe/hidrobill)](https://github.com/Kent-Probe/hidrobill/releases)
+  [![GitHub downloads](https://img.shields.io/github/downloads/Kent-Probe/hidrobill/total)](https://github.com/Kent-Probe/hidrobill/releases)
+  
+</div>
 
-## Recommended IDE Setup
+## 📋 Descripción
 
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+HidroBill es una aplicación de escritorio diseñada para la gestión integral de acueductos comunitarios. Permite administrar clientes, contratos, casas, pagos y generar recibos de manera eficiente y profesional.
 
-## Type Support For `.vue` Imports in TS
+## ✨ Características Principales
 
-Since TypeScript cannot handle type information for `.vue` imports, they are shimmed to be a generic Vue component type by default. In most cases this is fine if you don't really care about component prop types outside of templates. However, if you wish to get actual prop types in `.vue` imports (for example to get props validation when using manual `h(...)` calls), you can enable Volar's Take Over mode by following these steps:
+- 👥 **Gestión de Clientes**: Registro y administración completa de usuarios
+- 🏠 **Administración de Casas**: Control de propiedades y direcciones
+- 📄 **Contratos**: Gestión de contratos de servicio
+- 💰 **Pagos y Facturación**: Sistema completo de cobros y recibos
+- 🖨️ **Generación de Recibos**: Impresión profesional de comprobantes
+- 🔄 **Actualizaciones Automáticas**: Sistema de actualizaciones integrado
+- 🔒 **Seguridad**: Autenticación y encriptación de datos
 
-1. Run `Extensions: Show Built-in Extensions` from VS Code's command palette, look for `TypeScript and JavaScript Language Features`, then right click and select `Disable (Workspace)`. By default, Take Over mode will enable itself if the default TypeScript extension is disabled.
-2. Reload the VS Code window by running `Developer: Reload Window` from the command palette.
+## 🚀 Instalación Rápida
 
-You can learn more about Take Over mode [here](https://github.com/johnsoncodehk/volar/discussions/471).
+### Requisitos del Sistema
+
+- Windows 10 o superior
+- 4 GB de RAM mínimo
+- 500 MB de espacio libre
+
+### Descargar e Instalar
+
+1. Ve a [Releases](https://github.com/Kent-Probe/hidrobill/releases/latest)
+2. Descarga `HidroBill_X.X.X_x64_en-US.msi`
+3. Ejecuta el instalador
+
+### ⚠️ Advertencia de Windows
+
+Si aparece "Windows protegió su PC":
+
+1. Haz clic en **"Más información"**
+2. Haz clic en **"Ejecutar de todas formas"**
+
+> Esta advertencia aparece porque no tenemos un certificado de código comercial ($200+ anuales). La aplicación es completamente segura.
+
+## 📚 Documentación
+
+- 📖 [Guía de Usuario](docs/user-guide.md)
+- 🔧 [Guía de Desarrollador](docs/developer-guide.md)
+- 🚨 [Solución de Problemas](docs/troubleshooting.md)
+- 📋 [Instalación Detallada](docs/installation.md)
+
+## 🛠️ Tecnologías
+
+- **Frontend**: Vue 3 + TypeScript + Vuetify
+- **Backend**: Rust + Tauri 2
+- **Base de Datos**: SQLite
+- **Empaquetado**: Tauri Bundle
+
+## 🏁 Inicio Rápido
+
+### Credenciales por Defecto
+
+- **Usuario**: `admin`
+- **Contraseña**: `admin123`
+
+> ⚠️ **Importante**: Cambia estas credenciales en el primer uso.
+
+## 📸 Capturas de Pantalla
+
+_// TODO: Añadir capturas de pantalla aquí_
+
+## 🤝 Contribuir
+
+Las contribuciones son bienvenidas. Por favor:
+
+1. Haz fork del proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+## 📝 Licencia
+
+Este proyecto está bajo la Licencia MIT. Ver [LICENSE](LICENSE) para más detalles.
+
+## 👨‍💻 Desarrollador
+
+<div align="center">
+  
+  **Desarrollado por Kent-Probe**
+  
+  [![GitHub](https://img.shields.io/badge/GitHub-Kent--Probe-black?style=flat&logo=github)](https://github.com/Kent-Probe)
+  
+</div>
+
+## 📞 Soporte
+
+- 🐛 [Reportar Bug](https://github.com/Kent-Probe/hidrobill/issues)
+- 💡 [Solicitar Feature](https://github.com/Kent-Probe/hidrobill/issues)
+- 📧 Email: [kevinshe01@gmail.com]
+
+---
+
+<div align="center">
+  
+  **⭐ Si te gusta el proyecto, no olvides darle una estrella ⭐**
+  
+</div>
