@@ -1,4 +1,6 @@
 <script setup>
+import { getVersion } from "@tauri-apps/api/app";
+import { onMounted, ref } from "vue";
 import Bubles from "./bubles.vue";
 defineProps({
   title: {
@@ -13,6 +15,12 @@ defineProps({
     type: String,
     default: "Para iniciar con el registro, por favor inicia sesión",
   },
+});
+
+const appVersion = ref("");
+
+onMounted(async () => {
+  appVersion.value = await getVersion();
 });
 </script>
 
@@ -32,7 +40,9 @@ defineProps({
         <img src="../assets/logo.svg" alt="Logo del desarrollador kent" width="25" />
       </p>
       <p>&copy; 2024 Todos los derechos reservados</p>
-      <p><strong class="text-secundary"> HIDROBILL </strong></p>
+      <p>
+        <strong class="text-secundary"> HIDROBILL v{{ appVersion }} </strong>
+      </p>
     </div>
   </div>
 </template>
