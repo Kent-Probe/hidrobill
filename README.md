@@ -1,7 +1,8 @@
 # HIDROBILL + KENT
 
 <div align="center">
-  <img src="src/assets/logo.svg" alt="HidroBill Logo" width="200" height="200"/>
+  <img src="src/assets/logo.svg" alt="Logo Kent" width="200" height="200"/>
+  <img src="src/assets/logoHidroBill.webp" alt="HidroBill Logo" width="200" height="200"/>
   
   # HidroBill
   
