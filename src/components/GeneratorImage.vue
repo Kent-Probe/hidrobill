@@ -70,7 +70,7 @@ const printGeneratedImage = async () => {
         <style>
           @page {
             size: letter portrait;
-            margin: 1cm;
+            margin: 0cm;
           }
           body {
             margin: 0;
@@ -167,7 +167,7 @@ const getChargePayment: string = () => {
                   <div>
                     <p>ACUEDUCTO COMUNITARIO CARIBAYONA</p>
                     <p>NOMBRE: {{ payment_info.client.name }} {{ payment_info.client.lastname }}</p>
-                    <p>FACTURA: {{ payment_info.payment.id }}</p>
+                    <p class="color-red">FACTURA: {{ payment_info.payment.id }}</p>
                     <p>CASA No: {{ payment_info.house.id }} - {{ payment_info.house.id }}</p>
                     <p>FECHA: {{ new Date(payment_info.payment.date).toLocaleDateString() }}</p>
                     <p>{{ payment_info.payment.description }}</p>
@@ -198,20 +198,12 @@ const getChargePayment: string = () => {
                         <td>{{ formatPrice(payment_info.payment.monthly_payment) }}</td>
                       </tr>
                       <tr>
-                        <td>RECONEXIÓN</td>
-                        <td>{{ formatPrice(payment_info.payment.reconnection) }}</td>
-                      </tr>
-                      <tr>
                         <td>ABONOS</td>
                         <td>{{ formatPrice(payment_info.payment.payments) }}</td>
                       </tr>
                       <tr>
                         <td>CARGO POR PAGO ATRASADO</td>
                         <td>{{ formatPrice(payment_info.payment.late_fee) }}</td>
-                      </tr>
-                      <tr>
-                        <td>Otros cargos</td>
-                        <td>{{ formatPrice(payment_info.payment.other_charges) }}</td>
                       </tr>
                       <tr>
                         <td>Sub Total</td>
@@ -243,7 +235,7 @@ const getChargePayment: string = () => {
                   <div>
                     <p>ACUEDUCTO COMUNITARIO CARIBAYONA</p>
                     <p>NOMBRE: {{ payment_info.client.name }} {{ payment_info.client.lastname }}</p>
-                    <p>FACTURA: {{ payment_info.payment.id }}</p>
+                    <p class="color-red">FACTURA: {{ payment_info.payment.id }}</p>
                     <p>CASA No: {{ payment_info.house.id }} - {{ payment_info.house.id }}</p>
                     <p>FECHA: {{ new Date(payment_info.payment.date).toLocaleDateString() }}</p>
                     <p>{{ payment_info.payment.description }}</p>
@@ -274,24 +266,12 @@ const getChargePayment: string = () => {
                         <td>{{ formatPrice(payment_info.payment.monthly_payment) }}</td>
                       </tr>
                       <tr>
-                        <td>SALDO ANTERIOR</td>
-                        <td>{{ formatPrice(payment_info.payment.remaining_debt) }}</td>
-                      </tr>
-                      <tr>
-                        <td>RECONEXIÓN</td>
-                        <td>{{ formatPrice(payment_info.payment.reconnection) }}</td>
-                      </tr>
-                      <tr>
                         <td>ABONOS</td>
                         <td>{{ formatPrice(payment_info.payment.payments) }}</td>
                       </tr>
                       <tr>
                         <td>CARGO POR PAGO ATRASADO</td>
                         <td>{{ formatPrice(payment_info.payment.late_fee) }}</td>
-                      </tr>
-                      <tr>
-                        <td>Otros cargos</td>
-                        <td>{{ formatPrice(payment_info.payment.other_charges) }}</td>
                       </tr>
                       <tr>
                         <td>Sub Total</td>
@@ -353,7 +333,12 @@ const getChargePayment: string = () => {
 </template>
 
 <style scoped>
+.color-red {
+  color: red !important;
+}
+
 .live-preview {
+  font-size: 20px;
   display: flex;
   flex-direction: row;
   align-items: space-between;
@@ -369,7 +354,6 @@ const getChargePayment: string = () => {
   font-weight: bold;
 
   width: fit-content;
-  height: 750px;
 
   & > .content {
     border: 2px solid #ccc;

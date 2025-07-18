@@ -176,10 +176,34 @@ async function nexStep() {
   step.value++;
 }
 
+const storePayments = usePaymetsStore();
+const { cargando, result } = storeToRefs(storePayments);
+const { createPayment, updatePaymentStatus } = storePayments;
+const typePymentToSend = ref("Fijo");
+const toPaymentType = ref("Desde este mes hasta el último mes");
+
+// watch(
+//   [selectedPayment],
+//   (newValues) => {
+//     const [newValue] = newValues;
+//     // Actualiza el valor total del pago automáticamente al cambiar otros campos
+//     valueTotal.value =
+//       newValue.monthly_payment * newValue.amount_monthly +
+//       newValue.reconnection +
+//       newValue.late_fee +
+//       newValue.enrollment +
+//       newValue.payments +
+//       newValue.other_charges;
+//   },
+//   {
+//     deep: true,
+//   }
+// );
 watch(
-  selectedPayment,
-  (newValue) => {
-    // Actualiza el valor total del pago automáticamente al cambiar otros campos
+  [typePymentToSend, selectedPayment],
+  (newValues) => {
+    const [val, newValue] = newValues;
+
     valueTotal.value =
       newValue.monthly_payment * newValue.amount_monthly +
       newValue.reconnection +
@@ -187,21 +211,7 @@ watch(
       newValue.enrollment +
       newValue.payments +
       newValue.other_charges;
-  },
-  {
-    deep: true,
-  }
-);
 
-const storePayments = usePaymetsStore();
-const { cargando, result } = storeToRefs(storePayments);
-const { createPayment, updatePaymentStatus } = storePayments;
-const typePymentToSend = ref("Fijo");
-const toPaymentType = ref("Desde este mes hasta el último mes");
-
-watch(
-  typePymentToSend,
-  (val) => {
     const date = new Date(selectedPayment.value.date_payment);
     const dateEnd = new Date();
     const monthly = date.toLocaleString("default", { month: "long" });
@@ -213,7 +223,6 @@ watch(
     const monthlyStart = dateEnd.toLocaleString("default", { month: "long" });
     if (val === "Fijo") {
       selectedPayment.value.monthly_type_amount = "FIXED";
-      selectedPayment.value.amount_monthly = 1;
       toPaymentType.value = `Solo el mes: ${monthly}`;
     } else if (val === "A partir de este mes") {
       selectedPayment.value.monthly_type_amount = "UP";
@@ -244,6 +253,7 @@ const sendToDonwloadRecebit = (id: string) => {
   });
 };
 
+/* Dialog for add house */
 const dialogAddHouseToClient = ref(false);
 const houseSelect = ref<House[]>([]);
 
@@ -315,7 +325,7 @@ watch(dialogAddHouseToClient, () => {
   step.value = 1;
 });
 
-/* Contracts edit and deleted */
+/* Dialog for contracts edit and deleted */
 const dialogContractsInfo = ref(false);
 const isEditContracts = ref(false);
 const selectContratToEdit = ref<Contract>({});
@@ -487,6 +497,7 @@ const deletedContract = async (id: string | number) => {
       </v-row>
     </v-col>
 
+    <!-- Dialog para agregar un pago -->
     <v-dialog v-model="dialog" max-width="700">
       <v-card subtitle="Generar un nuevo pago" title="Agregar un pago.">
         <template v-slot:text>
@@ -693,6 +704,7 @@ const deletedContract = async (id: string | number) => {
       </v-card>
     </v-dialog>
 
+    <!-- Dialog para agregar una casa al cliente existente -->
     <v-dialog v-model="dialogAddHouseToClient" max-width="700">
       <v-card subtitle="Agregar una nueva casa" title="Se registrara un nuevo contrato por casa.">
         <template v-slot:text>
@@ -854,6 +866,7 @@ const deletedContract = async (id: string | number) => {
       </v-card>
     </v-dialog>
 
+    <!-- Dialog para edita/eliminar un contrato existente -->
     <v-dialog v-model="dialogContractsInfo" max-width="700">
       <v-card subtitle="Información del contrato" title="Contrato asignado.">
         <template v-slot:text>

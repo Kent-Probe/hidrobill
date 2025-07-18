@@ -116,9 +116,13 @@ async function save() {
       message: result.message,
       success: result.success,
     };
-    record.value = { ...DEFAULT_RECORD };
     recordHouse.value = [];
   }
+  record.value = { ...DEFAULT_RECORD };
+  if (record.value.contracts?.length > 0) {
+    record.value.contracts = [];
+  }
+  console.log("record after save: ", record.value);
 }
 
 async function reset() {
@@ -142,7 +146,9 @@ async function nexStep() {
     recordHouse.value.push({ id: "C-000", direction: "", colorChip: "green", neighborhood: "", description: "" });
   }
   if (step.value === 1) {
+    record.value.contracts = [];
     for (let house of recordHouse.value) {
+      console.log("record before: ", record.value.contracts);
       record.value.contracts.push({
         id_house: house.id,
         id_client: record.value.id,
@@ -161,6 +167,7 @@ async function nexStep() {
           neighborhood: house.neighborhood,
         },
       });
+      console.log("record later: ", record.value.contracts);
     }
   }
   if (step.value === 2) {
@@ -168,11 +175,13 @@ async function nexStep() {
     if (validFormHouses.valid !== undefined && !validFormHouses.valid) {
       return;
     }
+    console.log("record before: ", record.value.contracts);
     for (let [index, house] of recordHouse.value?.entries()) {
       record.value.contracts[index].house.direction = house.direction;
       record.value.contracts[index].house.neighborhood = house.neighborhood;
       record.value.contracts[index].house.description = house.description;
     }
+    console.log("record later: ", record.value.contracts);
     await save();
   }
   step.value++;
@@ -336,7 +345,7 @@ async function loadItems(options: any) {
                   ></v-select>
                 </v-col>
                 <v-col cols="12" md="6">
-                  <v-text-field :rules="rules" v-model="record.phone" label="Número de celular"></v-text-field>
+                  <v-text-field v-model="record.phone" label="Número de celular"></v-text-field>
                 </v-col>
                 <v-col v-if="!isEditing" cols="12">
                   <ComboBoxHouses v-model="recordHouse" />
