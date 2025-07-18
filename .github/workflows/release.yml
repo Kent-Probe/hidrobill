@@ -1,0 +1,54 @@
+name: "publish"
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  publish-tauri:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: "windows-latest"
+            args: "--target x86_64-pc-windows-msvc"
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: install dependencies (ubuntu only)
+        if: matrix.platform == 'ubuntu-20.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: install frontend dependencies
+        run: npm install
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: v__VERSION__
+          releaseName: "HidroBill v__VERSION__"
+          releaseBody: "Nueva versión de HidroBill con mejoras y correcciones."
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}

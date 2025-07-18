@@ -25,9 +25,21 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"]
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
+    "createUpdaterArtifacts": true
   },
   "plugins": {
+    "updater": {
+      "active": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENCQUU3OTNGRDEyNEVGMDUKUldRRjd5VFJQM211eTR5Vkl3UGtEMC92V2pBUXVsV2VObWR1T3EvWGxveWJoZnVPYytZRmJOMy8K",
+      "windows": {
+        "installMode": "passive"
+      },
+      "endpoints": [
+        "https://api.github.com/repos/Kent-Probe/hidrobill/releases/latest",
+        "https://api.github.com/repos/Kent-Probe/hidrobill/releases"
+      ]
+    },
     "sql": {
       "preload": ["sqlite:hidrobill.db"]
     }
