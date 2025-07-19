@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "HidroBill",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "identifier": "com.hidrobill.app",
   "build": {
     "beforeDevCommand": "bun run dev",
@@ -32,13 +32,7 @@
     "updater": {
       "active": true,
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENCQUU3OTNGRDEyNEVGMDUKUldRRjd5VFJQM211eTR5Vkl3UGtEMC92V2pBUXVsV2VObWR1T3EvWGxveWJoZnVPYytZRmJOMy8K",
-      "windows": {
-        "installMode": "passive"
-      },
-      "endpoints": [
-        "https://api.github.com/repos/Kent-Probe/hidrobill/releases/latest",
-        "https://api.github.com/repos/Kent-Probe/hidrobill/releases"
-      ]
+      "endpoints": ["https://github.com/Kent-Probe/hidrobill/releases/latest/download/latest.json"]
     },
     "sql": {
       "preload": ["sqlite:hidrobill.db"]

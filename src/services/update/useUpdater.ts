@@ -16,6 +16,8 @@ export const useUpdater = () => {
 
       const update = await check();
 
+      console.log(update);
+
       if (update) {
         updateAvailable.value = true;
         latestVersion.value = update.version;
@@ -26,6 +28,7 @@ export const useUpdater = () => {
         return null;
       }
     } catch (error) {
+      console.error(error);
       console.error("Error al verificar actualizaciones:", error);
       return null;
     } finally {

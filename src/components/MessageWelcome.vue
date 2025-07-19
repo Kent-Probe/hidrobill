@@ -39,7 +39,7 @@ onMounted(async () => {
         Desarrollado por <strong class="text-secundary">Kent</strong>
         <img src="../assets/logo.svg" alt="Logo del desarrollador kent" width="25" />
       </p>
-      <p>&copy; 2024 Todos los derechos reservados</p>
+      <p>&copy; 2025 Todos los derechos reservados</p>
       <p>
         <strong class="text-secundary"> HIDROBILL v{{ appVersion }} </strong>
       </p>

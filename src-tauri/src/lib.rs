@@ -28,9 +28,9 @@ pub fn run() {
                 .expect("could not resolve app local data path")
                 .join("salt.txt");
             app.handle().plugin(tauri_plugin_stronghold::Builder::with_argon2(&salt_path).build())?;
-            app.handle().plugin(tauri_plugin_process::init())?;
             #[cfg(desktop)]
             app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
+            app.handle().plugin(tauri_plugin_process::init())?;
 
             Ok(())
         })
