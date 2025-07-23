@@ -182,23 +182,6 @@ const { createPayment, updatePaymentStatus } = storePayments;
 const typePymentToSend = ref("Fijo");
 const toPaymentType = ref("Desde este mes hasta el último mes");
 
-// watch(
-//   [selectedPayment],
-//   (newValues) => {
-//     const [newValue] = newValues;
-//     // Actualiza el valor total del pago automáticamente al cambiar otros campos
-//     valueTotal.value =
-//       newValue.monthly_payment * newValue.amount_monthly +
-//       newValue.reconnection +
-//       newValue.late_fee +
-//       newValue.enrollment +
-//       newValue.payments +
-//       newValue.other_charges;
-//   },
-//   {
-//     deep: true,
-//   }
-// );
 watch(
   [typePymentToSend, selectedPayment],
   (newValues) => {
@@ -212,24 +195,31 @@ watch(
       newValue.payments +
       newValue.other_charges;
 
-    const date = new Date(selectedPayment.value.date_payment);
-    const dateEnd = new Date();
-    const monthly = date.toLocaleString("default", { month: "long" });
+    const dateStart = new Date(selectedPayment.value.date_payment);
+    const dateEnd = new Date(selectedPayment.value.date_payment);
 
-    dateEnd.setMonth(date.getMonth() + selectedPayment.value.amount_monthly - 1);
-    const monthlyEnd = dateEnd.toLocaleString("default", { month: "long" });
+    // const dateTest = new Date();
+    // dataTest.setMonth(dateTest.getMonth() - 1);
+    // console.log(dateTest.toLocaleString("default", { month: "long", year: "numeric" }));
 
-    dateEnd.setMonth(date.getMonth() - selectedPayment.value.amount_monthly + 1);
-    const monthlyStart = dateEnd.toLocaleString("default", { month: "long" });
     if (val === "Fijo") {
+      const monthly = dateStart.toLocaleString("default", { month: "long", year: "numeric" });
       selectedPayment.value.monthly_type_amount = "FIXED";
       toPaymentType.value = `Solo el mes: ${monthly}`;
     } else if (val === "A partir de este mes") {
+      dateEnd.setMonth(dateEnd.getMonth() + newValue.amount_monthly - 1);
+      const monthlyStart = dateStart.toLocaleString("default", { month: "long", year: "numeric" });
+      const monthlyEnd = dateEnd.toLocaleString("default", { month: "long", year: "numeric" });
+
       selectedPayment.value.monthly_type_amount = "UP";
-      toPaymentType.value = `Desde ${monthly} hasta: ${monthlyEnd}`;
+      toPaymentType.value = `Desde ${monthlyStart} hasta: ${monthlyEnd}`;
     } else if (val === "Este mes es el último") {
+      dateStart.setMonth(dateEnd.getMonth() - newValue.amount_monthly + 1);
+      const monthlyStart = dateStart.toLocaleString("default", { month: "long", year: "numeric" });
+      const monthlyEnd = dateEnd.toLocaleString("default", { month: "long", year: "numeric" });
+
       selectedPayment.value.monthly_type_amount = "DOWN";
-      toPaymentType.value = `Desde ${monthlyStart} hasta: ${monthly}`;
+      toPaymentType.value = `Desde ${monthlyStart} hasta: ${monthlyEnd}`;
     }
   },
   {
