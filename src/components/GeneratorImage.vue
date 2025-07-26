@@ -1,4 +1,3 @@
-<!-- filepath: src/components/ImageGenerator.vue -->
 <script setup lang="ts">
 import html2canvas from "html2canvas";
 import { onMounted, ref } from "vue";
@@ -22,25 +21,18 @@ const isLoading = ref(false);
 // --- Referencia al elemento HTML que queremos capturar ---
 const imageSourceRef = ref<HTMLElement | null>(null);
 
-/**
- * Genera la imagen usando html2canvas.
- */
 const generateImage = async () => {
   if (!imageSourceRef.value) return;
 
   isLoading.value = true;
-  generatedImageSrc.value = null; // Limpia la imagen anterior
+  generatedImageSrc.value = null;
 
   try {
-    // html2canvas toma el elemento HTML y devuelve una promesa con el canvas
     const canvas = await html2canvas(imageSourceRef.value, {
-      // Opciones para mejorar la calidad
-
       scale: 2,
       useCORS: true,
     });
 
-    // Convertimos el canvas a una URL de datos (formato PNG por defecto)
     generatedImageSrc.value = canvas.toDataURL("image/png");
   } catch (error) {
     console.error("Error al generar la imagen:", error);
@@ -62,7 +54,6 @@ const printGeneratedImage = async () => {
 
     const imageSrc = canvas.toDataURL("image/png");
 
-    // --- CAMBIOS AQUÍ ---
     const printContent = `
     <html>
       <head>
@@ -101,7 +92,7 @@ const printGeneratedImage = async () => {
       printWindow.focus();
       printWindow.onload = () => {
         printWindow.print();
-        // printWindow.close();
+        printWindow.close();
       };
     }
   } catch (error) {
@@ -113,34 +104,26 @@ const printGeneratedImage = async () => {
 
 const getChargePayment: string = () => {
   const paymentType = payment_info.value.payment.monthly_type_amount;
-  const datePayment = new Date(payment_info.value.payment.date_payment);
-  const dateEnd = datePayment;
-  const monthlyPayment = datePayment
-    .toLocaleString("es-ES", {
-      month: "long",
-    })
-    .toUpperCase();
 
-  if (paymentType === "FIXED") return `${monthlyPayment} del ${datePayment.getFullYear()}`;
+  const dateStart = new Date(payment_info.value.payment.date_payment);
+  const dateEnd = new Date(payment_info.value.payment.date_payment);
 
+  if (paymentType === "FIXED") {
+    const monthly = dateStart.toLocaleString("default", { month: "long", year: "numeric" });
+    return `Solo el mes ${monthly}`.toUpperCase();
+  }
   if (paymentType === "UP") {
     dateEnd.setMonth(dateEnd.getMonth() + payment_info.value.payment.amount_monthly - 1);
-    const monthlyEnd = dateEnd
-      .toLocaleString("es-ES", {
-        month: "long",
-      })
-      .toUpperCase();
-    return `DESDE ${monthlyPayment} del ${datePayment.getFullYear()} HASTA ${monthlyEnd} del ${dateEnd.getFullYear()}`;
+    const monthlyStart = dateStart.toLocaleString("default", { month: "long", year: "numeric" });
+    const monthlyEnd = dateEnd.toLocaleString("default", { month: "long", year: "numeric" });
+    return `Desde ${monthlyStart} hasta ${monthlyEnd}`.toUpperCase();
   }
-
   if (paymentType === "DOWN") {
-    dateEnd.setMonth(dateEnd.getMonth() - payment_info.value.payment.amount_monthly + 1);
-    const monthlyEnd = dateEnd
-      .toLocaleString("es-ES", {
-        month: "long",
-      })
-      .toUpperCase();
-    return `DESDE ${monthlyEnd} del ${dateEnd.getFullYear()} HASTA ${monthlyPayment} del ${datePayment.getFullYear()}`;
+    dateStart.setMonth(dateEnd.getMonth() - payment_info.value.payment.amount_monthly + 1);
+    const monthlyStart = dateStart.toLocaleString("default", { month: "long", year: "numeric" });
+    const monthlyEnd = dateEnd.toLocaleString("default", { month: "long", year: "numeric" });
+
+    return `Desde ${monthlyStart} hasta ${monthlyEnd}`.toUpperCase();
   }
 
   return "No se pudo retornar el mes.";

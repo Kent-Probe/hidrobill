@@ -198,10 +198,6 @@ watch(
     const dateStart = new Date(selectedPayment.value.date_payment);
     const dateEnd = new Date(selectedPayment.value.date_payment);
 
-    // const dateTest = new Date();
-    // dataTest.setMonth(dateTest.getMonth() - 1);
-    // console.log(dateTest.toLocaleString("default", { month: "long", year: "numeric" }));
-
     if (val === "Fijo") {
       const monthly = dateStart.toLocaleString("default", { month: "long", year: "numeric" });
       selectedPayment.value.monthly_type_amount = "FIXED";
