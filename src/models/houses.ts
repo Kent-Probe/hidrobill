@@ -1,5 +1,6 @@
 export type House = {
   id: string;
+  idHouse: string;
   direction: string;
   neighborhood: string;
   colorChip: string;

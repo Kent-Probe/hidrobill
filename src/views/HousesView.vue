@@ -13,6 +13,7 @@ const open = ref(false);
 
 const houseSelect = ref({
   id: "",
+  idHouse: "",
   direction: "",
   colorChip: "",
   neighborhood: "",
@@ -50,12 +51,7 @@ async function saveChanges() {
             <v-card-title>Casa seleccionada</v-card-title>
           </v-col>
           <v-col cols="4">
-            <v-text-field
-              v-model="houseSelect.id"
-              label="ID"
-              :prepend-inner-icon="mdiIdentifier"
-              readonly
-            ></v-text-field>
+            <v-text-field v-model="houseSelect.idHouse" label="ID" :prepend-inner-icon="mdiIdentifier"></v-text-field>
           </v-col>
           <v-col cols="4">
             <v-text-field

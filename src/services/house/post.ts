@@ -10,8 +10,11 @@ export async function updateHouse(id: string, house: Omit<House, "id" | "created
   try {
     const db = await Database.load("sqlite:hidrobill.db");
 
+    const { idHouse, ...houseSelect } = house;
+
     const updatedHouse = {
-      ...house,
+      ...houseSelect,
+      id: idHouse,
       updated_at: new Date().toISOString(),
     };
 
@@ -22,7 +25,8 @@ export async function updateHouse(id: string, house: Omit<House, "id" | "created
                 neighborhood = ?, 
                 colorChip = ?, 
                 description = ?, 
-                updated_at = ? 
+                updated_at = ?,
+                id = ?
             WHERE id = ?`,
         [
           updatedHouse.direction,
@@ -30,6 +34,7 @@ export async function updateHouse(id: string, house: Omit<House, "id" | "created
           updatedHouse.colorChip,
           updatedHouse.description,
           updatedHouse.updated_at,
+          updatedHouse.id,
           id,
         ]
       )

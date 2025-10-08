@@ -15,6 +15,7 @@ export async function getHouses(limit: number, page: number, search: string = ""
           );
     return houseRow.map((row) => ({
       id: row.id,
+      idHouse: row.id,
       direction: row.direction,
       neighborhood: row.neighborhood,
       colorChip: row.colorChip,
@@ -35,6 +36,7 @@ export async function searchHouses(search: string, isLimit: boolean = true): Pro
   ]);
   return houseRow.map((row) => ({
     id: row.id,
+    idHouse: row.id,
     direction: row.direction,
     neighborhood: row.neighborhood,
     colorChip: row.colorChip,

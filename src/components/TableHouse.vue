@@ -11,6 +11,7 @@ const { fetchHouses } = storeHouses;
 
 const DEFAULT_HOUSE: House = {
   id: "",
+  idHouse: "",
   direction: "",
   colorChip: "",
   description: "",
@@ -26,7 +27,7 @@ const houseSelect = defineModel<House>({
 });
 
 const headers = ref([
-  { title: "id", key: "id", align: "start", sortable: true },
+  { title: "id", key: "idHouse", align: "start", sortable: true },
   { title: "Dirección", key: "direction", align: "end" },
   { title: "Color", key: "colorChip", align: "end" },
   { title: "Barrio", key: "neighborhood", align: "end" },
