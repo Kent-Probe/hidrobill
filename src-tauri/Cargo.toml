@@ -1,9 +1,9 @@
 [package]
 name = "hidrobill"
-version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
-edition = "2021"
+version = "0.2.1"
+description = "App management payments"
+authors = ["kents"]
+edition = "2025"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
