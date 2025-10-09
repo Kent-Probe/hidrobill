@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "win": "tauri dev",
-    "test": "vitest"
+    "test": "vitest",
+    "build:win": "tauri build -- --target x86_64-pc-windows-msvc"
   },
   "dependencies": {
     "@tauri-apps/api": "2",

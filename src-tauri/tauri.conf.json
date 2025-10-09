@@ -31,7 +31,7 @@
   "plugins": {
     "updater": {
       "active": true,
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENCQUU3OTNGRDEyNEVGMDUKUldRRjd5VFJQM211eTR5Vkl3UGtEMC92V2pBUXVsV2VObWR1T3EvWGxveWJoZnVPYytZRmJOMy8K",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDU1RTI5QjgzMTc4M0QyMEQKUldRTjBvTVhnNXZpVlFEeWR5TXE1V0FvRm1IeGV3c2p1QzdDOUc1dFpmUzBtY2FDNFEvS1d1OWgK",
       "endpoints": ["https://github.com/Kent-Probe/hidrobill/releases/latest/download/latest.json"]
     },
     "sql": {
